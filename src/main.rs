@@ -43,8 +43,18 @@ async fn main() {
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
-    tokio::spawn(async move {
-        core::start_core_task(token.clone());
+    let core_token = token.clone();
+    let core_handle = tokio::spawn(async move {
+        return core::start_core_task(core_token).await;
     });
+
+    let io_token = token.clone();
+    let io_handle = tokio::spawn(async move {
+        return io::start_io_task(io_token).await;
+    });
+
+    let _ = tokio::try_join!(
+        core_handle, io_handle
+    );
 }
 
