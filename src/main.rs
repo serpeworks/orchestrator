@@ -1,7 +1,23 @@
 use tokio_util::sync::CancellationToken;
+use tracing::info;
 
 mod core;
 mod io;
+
+/// Setups the tracing module with a global default subscriber.
+/// This heavily ties the server with the tracing module for operation.
+fn setup_tracing() {
+    use tracing::Level;
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_max_level(Level::TRACE)
+        .with_line_number(true)
+        .compact()
+        .with_thread_ids(true)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Setting default subscriber failed.");
+}
 
 /// Initializes handlers for termination signals.
 /// Currently it only catches the SIGINT unix signal,
@@ -13,29 +29,22 @@ async fn setup_signal_handlers(
     #[cfg(unix)]
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
-        println!("Ctrl-C Signal received! Gracefully shutting down.");
+        info!("Ctrl-C Signal received! Gracefully shutting down.");
         token.cancel();
-        println!("Shut down finalized.");
+        info!("Shut down finalized.");
     });
 }
 
 #[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
+    setup_tracing();
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
-    let _ = tokio::try_join!(
-        core::start_core_task(
-            token.clone()
-        ),
-        io::start_io_task(
-            token.clone()
-        )
-    );
-
-    println!("Shutting down!");
-
+    tokio::spawn(async move {
+        core::start_core_task(token.clone());
+    });
 }
 

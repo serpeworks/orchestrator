@@ -2,22 +2,26 @@
 
 mod state; 
 
+use tracing::info;
+
 use crate::core::state::RuntimeState;
 
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken
 ) -> Result<(), ()> {
-    let _state = RuntimeState::new();    
+    let _state = RuntimeState::new();
+    info!("Creating State");
 
     loop {
-
-
         if token.is_cancelled() {
             break
         }
+
+
+        tokio::task::yield_now().await;
     }
 
-    println!("done");
+    info!("Core Task finishing.");
 
     return Ok(());
 }
