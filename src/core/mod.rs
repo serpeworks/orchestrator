@@ -6,6 +6,7 @@ use tracing::info;
 
 use crate::core::state::RuntimeState;
 
+#[tracing::instrument]
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken
 ) -> Result<(), ()> {
@@ -19,6 +20,7 @@ pub async fn start_core_task(
 
 
         tokio::task::yield_now().await;
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     }
 
     info!("Core Task finishing.");
