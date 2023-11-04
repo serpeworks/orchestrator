@@ -12,7 +12,6 @@ pub async fn start_io_task(
     info!("IO initialized.");
 
     loop {
-
         if token.is_cancelled() {
             break;
         }

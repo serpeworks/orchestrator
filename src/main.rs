@@ -35,17 +35,23 @@ async fn setup_signal_handlers(
     });
 }
 
+
 #[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
+    use self::core::configuration::Configuration;
+
     setup_tracing();
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
+    let config = Configuration {
+        frequency: 200, 
+    };
     let core_token = token.clone();
     let core_handle = tokio::spawn(async move {
-        return core::start_core_task(core_token).await;
+        return core::start_core_task(core_token, config).await;
     });
 
     let io_token = token.clone();
