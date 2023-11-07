@@ -1,24 +1,19 @@
-use tracing::info;
-
 /// IO Module for the drones server.
 ///
 ///
 
-#[tracing::instrument]
+mod diagnostic;
+
+use tracing::info;
+use crate::io::diagnostic::run_diagnostic_server;
+
 pub async fn start_io_task(
     token: tokio_util::sync::CancellationToken
 ) -> Result<(), ()> {
 
     info!("IO initialized.");
 
-    loop {
-        if token.is_cancelled() {
-            break;
-        }
-
-        tokio::task::yield_now().await;
-        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-    }
+    run_diagnostic_server(8080, token.clone()).await;
 
     info!("IO shutting down.");
 

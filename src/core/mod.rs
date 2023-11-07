@@ -10,7 +10,6 @@ use crate::core::state::RuntimeState;
 
 use self::configuration::Configuration;
 
-#[tracing::instrument]
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken,
     configuration: Configuration,
