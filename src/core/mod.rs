@@ -1,5 +1,4 @@
 /// Core module for the Drones Server.
-
 mod state; 
 
 pub mod configuration;
@@ -17,7 +16,7 @@ pub async fn start_core_task(
     let _state = RuntimeState::new();
     info!("Creating State");
 
-    let period = 1000 / configuration.frequency; 
+    let period = std::time::Duration::from_millis(1000 / configuration.frequency); 
     loop {
         let start = std::time::Instant::now();
         if token.is_cancelled() {
@@ -26,12 +25,8 @@ pub async fn start_core_task(
 
 
 
-
-
         let ellapsed = start.elapsed();
-        if let Some(remaining) = std::time::Duration::from_millis(period).checked_sub(ellapsed) {
-            tokio::time::sleep(remaining).await;
-        }
+        sleep(period, ellapsed).await;
     }
 
     info!("Core Task finishing.");
@@ -39,3 +34,8 @@ pub async fn start_core_task(
     return Ok(());
 }
 
+async fn sleep(period: std::time::Duration, ellapsed: std::time::Duration) {
+    if let Some(remaining) = period.checked_sub(ellapsed) {
+        tokio::time::sleep(remaining).await;
+    }
+}
