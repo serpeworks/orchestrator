@@ -14,9 +14,9 @@ impl RuntimeState {
         }
     }
     
-    pub fn register_session(&mut self) -> Result<(), ()> {
-
-        Ok(()) 
+    pub fn register_session(&mut self) -> Result<u64, ()> {
+        
+        Ok(0) 
     }
 
     pub fn obtain_session(&self, session_id: &u64) -> Option<&Session> {
@@ -44,6 +44,6 @@ mod tests {
         let session_id = result.expect("Expected the result to be ok!");
         
         // The result ID can be looked up on the state
-        let session = state.obtain_session(id);
+        let session = state.obtain_session(&session_id);
     }
 }
