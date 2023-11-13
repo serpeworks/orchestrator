@@ -8,7 +8,7 @@ use tracing::info;
 use crate::io::diagnostic::run_diagnostic_server;
 
 pub async fn start_io_task(
-    token: tokio_util::sync::CancellationToken
+    token: tokio_util::sync::CancellationToken,
 ) -> Result<(), ()> {
 
     info!("IO initialized.");

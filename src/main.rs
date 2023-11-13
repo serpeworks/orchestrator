@@ -7,9 +7,8 @@ mod io;
 /// Setups the tracing module with a global default subscriber.
 /// This heavily ties the server with the tracing module for operation.
 fn setup_tracing() {
-    use tracing::Level;
-    let subscriber = tracing_subscriber::FmtSubscriber::builder()
-        .with_max_level(Level::TRACE)
+
+    let subscriber = tracing_subscriber::fmt()
         .with_line_number(true)
         .compact()
         .with_thread_ids(true)
@@ -49,6 +48,7 @@ async fn main() {
     let config = Configuration {
         frequency: 200, 
     };
+
     let core_token = token.clone();
     let core_handle = tokio::spawn(async move {
         return core::start_core_task(core_token, config).await;

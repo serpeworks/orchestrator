@@ -1,9 +1,14 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
+mod state;
 
+use axum::extract::State;
 use axum::{Router, Json};
 use axum::routing::get;
 use tokio_util::sync::CancellationToken;
 use serde::Serialize;
+
+use self::state::{AppState, AppStateWrapper};
 
 #[derive(Serialize)]
 struct ServerInformationDTO {
@@ -16,9 +21,11 @@ pub async fn run_diagnostic_server(
     token: CancellationToken
 ) {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let state = AppState::new();
 
     let app = Router::new()
-        .route("/", get(root));
+        .route("/", get(root))
+        .with_state(Arc::new(state));
 
     let _ = axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -26,7 +33,9 @@ pub async fn run_diagnostic_server(
         .await;
 }
 
-async fn root() -> Json<ServerInformationDTO> {
+async fn root(
+) -> Json<ServerInformationDTO> {
+    // TODO: make this be returned from the server.
     let dto = ServerInformationDTO {
         version: "0.0.1".to_string(),
         uptime: 0.0

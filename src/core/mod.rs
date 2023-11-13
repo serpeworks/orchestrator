@@ -1,13 +1,12 @@
-/// Core module for the Drones Server.
-mod state; 
+/// Core module for the Drones Server
+
+mod domain;
+mod systems;
 
 pub mod configuration;
 
 use tracing::info;
-
-use crate::core::state::RuntimeState;
-
-use self::configuration::Configuration;
+use crate::core::configuration::Configuration;
 
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken,
