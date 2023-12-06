@@ -41,7 +41,7 @@ pub async fn start_core_task(
         systems.iter_mut().for_each(|sys| sys.affect(&mut state));
         
 
-        let _ = sleep(period, start.elapsed()).await;
+        sleep(period, start.elapsed()).await;
     }
 
     info!("Core Task finishing.");
