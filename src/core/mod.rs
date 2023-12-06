@@ -1,19 +1,29 @@
 /// Core module for the Drones Server
 
-mod domain;
-mod systems;
+pub mod domain;
+pub mod systems;
 
 pub mod configuration;
 
 use tracing::info;
-use crate::core::{configuration::Configuration, domain::state::RuntimeState};
+use crate::core::{configuration::Configuration, domain::state::RuntimeState, systems::{System, diagnostic::DiagnosticSystem}};
+
+use self::systems::diagnostic::messages::DiagnosticMessageReceiver;
 
 pub async fn start_core_task(
+    rx: DiagnosticMessageReceiver,
     token: tokio_util::sync::CancellationToken,
     configuration: Configuration,
 ) -> Result<(), ()> {
-    let _state = RuntimeState::new();
-    info!("Creating State");
+    // Create state and systems
+    let mut state = RuntimeState::new(std::time::Instant::now());
+    let mut systems : Vec<Box<dyn System>> = vec![
+        Box::new(DiagnosticSystem::new(rx))
+    ];
+   
+    for _ in 1..10 {
+        let _ = state.register_session();
+    }
 
     let period = std::time::Duration::from_millis(1000 / configuration.frequency); 
     loop {
@@ -21,11 +31,15 @@ pub async fn start_core_task(
         if token.is_cancelled() {
             break
         }
+        
+        // First do observation step
+        systems.iter_mut().for_each(|sys| sys.observe(&state));
 
+        // Perform affect step
+        systems.iter_mut().for_each(|sys| sys.affect(&mut state));
+        
 
-
-        let ellapsed = start.elapsed();
-        sleep(period, ellapsed).await;
+        let _ = sleep(period, start.elapsed()).await;
     }
 
     info!("Core Task finishing.");

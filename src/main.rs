@@ -1,17 +1,16 @@
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 
-mod core;
+pub mod core;
 mod io;
 
 /// Setups the tracing module with a global default subscriber.
 /// This heavily ties the server with the tracing module for operation.
 fn setup_tracing() {
-
     let subscriber = tracing_subscriber::fmt()
         .with_line_number(true)
-        .compact()
         .with_thread_ids(true)
+        .compact()
         .finish();
 
     tracing::subscriber::set_global_default(subscriber)
@@ -38,29 +37,30 @@ async fn setup_signal_handlers(
 #[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
-    use self::core::configuration::Configuration;
+    use tokio::sync::mpsc;
 
+    use self::core::configuration::Configuration;
     setup_tracing();
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
     let config = Configuration {
-        frequency: 200, 
+        frequency: 20, 
     };
 
-    let core_token = token.clone();
-    let core_handle = tokio::spawn(async move {
-        return core::start_core_task(core_token, config).await;
-    });
+    let (tx, rx) = mpsc::channel(256);
 
-    let io_token = token.clone();
-    let io_handle = tokio::spawn(async move {
-        return io::start_io_task(io_token).await;
-    });
-
-    let _ = tokio::try_join!(
-        core_handle, io_handle
+    let _ = tokio::join!(
+        core::start_core_task(
+            rx,
+            token.clone(), 
+            config
+        ),
+        io::start_io_task(
+            tx,
+            token.clone(),
+        )
     );
 }
 

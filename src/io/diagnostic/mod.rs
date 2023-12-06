@@ -1,45 +1,54 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
+
+mod dtos;
 mod state;
 
 use axum::extract::State;
 use axum::{Router, Json};
 use axum::routing::get;
 use tokio_util::sync::CancellationToken;
-use serde::Serialize;
+
+use crate::core::systems::diagnostic::messages::{DiagnosticMessageSender, DiagnosticRequest};
+use self::dtos::DTOs;
 
 use self::state::{AppState, AppStateWrapper};
 
-#[derive(Serialize)]
-struct ServerInformationDTO {
-    version: String,
-    uptime: f64,
-}
-
 pub async fn run_diagnostic_server(
+    tx: DiagnosticMessageSender,
     port: u16,
-    token: CancellationToken
+    token: CancellationToken,
 ) {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    let state = AppState::new();
+    let state = AppState::new(tx);
 
     let app = Router::new()
-        .route("/", get(root))
+        .route("/", get(get_root))
+        .route("/sessions", get(get_sessions))
         .with_state(Arc::new(state));
 
-    let _ = axum::Server::bind(&addr)
+    let server_task = axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        .with_graceful_shutdown(token.cancelled())
-        .await;
+        .with_graceful_shutdown(token.cancelled());
+
+    tracing::info!("Diagnostic listening at http://localhost:{}", port);
+
+    let _ = server_task.await;
 }
 
-async fn root(
-) -> Json<ServerInformationDTO> {
-    // TODO: make this be returned from the server.
-    let dto = ServerInformationDTO {
-        version: "0.0.1".to_string(),
-        uptime: 0.0
-    };
-
-    Json(dto)
+async fn get_root(
+    State(state): AppStateWrapper,
+) -> Json<DTOs> {
+    let request = DiagnosticRequest::ServerInformation; 
+    let res = state.send_request(request).await.unwrap();
+    Json(res.to_dto())
 }
+
+async fn get_sessions(
+    State(state): AppStateWrapper,
+) -> Json<DTOs> {
+    let request = DiagnosticRequest::GetSessionCollection;
+    let res = state.send_request(request).await.unwrap();
+    Json(res.to_dto())
+}
+
