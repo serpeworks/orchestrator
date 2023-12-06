@@ -26,6 +26,8 @@ pub async fn start_core_task(
     }
 
     let period = std::time::Duration::from_millis(1000 / configuration.frequency); 
+
+    tracing::info!("Core Loop starting...");
     loop {
         let start = std::time::Instant::now();
         if token.is_cancelled() {
