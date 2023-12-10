@@ -46,7 +46,7 @@ async fn main() {
     setup_signal_handlers(token.clone()).await;
 
     let config = Configuration {
-        frequency: 20, 
+        frequency: 200, 
     };
 
     let (tx, rx) = mpsc::channel(256);

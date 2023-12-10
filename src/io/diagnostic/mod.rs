@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 mod dtos;
 mod state;
+mod handlers;
 
 use axum::extract::State;
 use axum::{Router, Json};
@@ -12,6 +13,7 @@ use tower_http::cors::CorsLayer;
 
 
 use crate::core::systems::diagnostic::messages::{DiagnosticMessageSender, DiagnosticRequest};
+use crate::io::diagnostic::handlers::{get_root, get_sessions};
 use self::dtos::DTOs;
 
 use self::state::{AppState, AppStateWrapper};
@@ -38,20 +40,3 @@ pub async fn run_diagnostic_server(
 
     let _ = server_task.await;
 }
-
-async fn get_root(
-    State(state): AppStateWrapper,
-) -> Json<DTOs> {
-    let request = DiagnosticRequest::ServerInformation; 
-    let res = state.send_request(request).await.unwrap();
-    Json(res.to_dto())
-}
-
-async fn get_sessions(
-    State(state): AppStateWrapper,
-) -> Json<DTOs> {
-    let request = DiagnosticRequest::GetSessionCollection;
-    let res = state.send_request(request).await.unwrap();
-    Json(res.to_dto())
-}
-
