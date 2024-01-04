@@ -21,10 +21,6 @@ pub async fn start_core_task(
         Box::new(DiagnosticSystem::new(rx))
     ];
    
-    for _ in 1..10 {
-        let _ = state.register_session();
-    }
-
     let period = std::time::Duration::from_millis(1000 / configuration.frequency); 
 
     tracing::info!("Core Loop starting...");

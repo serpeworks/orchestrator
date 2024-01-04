@@ -11,6 +11,8 @@ pub enum DTOs {
     SessionCollection {
         sessions: Vec<u64>,
     },
+    Environment {
+    }
 }
 
 impl DiagnosticResponse {
@@ -22,7 +24,10 @@ impl DiagnosticResponse {
             },
             Self::SessionCollection { sessions } => DTOs::SessionCollection {
                 sessions: sessions.clone()
-            }
+            },
+            Self::Environment {} => DTOs::Environment {
+
+            },
         }
     }
 }

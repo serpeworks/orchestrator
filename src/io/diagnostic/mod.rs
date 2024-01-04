@@ -5,18 +5,16 @@ mod dtos;
 mod state;
 mod handlers;
 
-use axum::extract::State;
-use axum::{Router, Json};
+use axum::Router;
 use axum::routing::get;
 use tokio_util::sync::CancellationToken;
 use tower_http::cors::CorsLayer;
 
 
-use crate::core::systems::diagnostic::messages::{DiagnosticMessageSender, DiagnosticRequest};
-use crate::io::diagnostic::handlers::{get_root, get_sessions};
-use self::dtos::DTOs;
+use crate::core::systems::diagnostic::messages::DiagnosticMessageSender;
+use crate::io::diagnostic::handlers::{get_root, get_sessions, create_router};
 
-use self::state::{AppState, AppStateWrapper};
+use self::state::AppState;
 
 pub async fn run_diagnostic_server(
     tx: DiagnosticMessageSender,
@@ -26,11 +24,7 @@ pub async fn run_diagnostic_server(
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     let state = AppState::new(tx);
 
-    let app = Router::new()
-        .route("/", get(get_root))
-        .route("/sessions", get(get_sessions))
-        .layer(CorsLayer::permissive())
-        .with_state(Arc::new(state));
+    let app = create_router(state);
 
     let server_task = axum::Server::bind(&addr)
         .serve(app.into_make_service())

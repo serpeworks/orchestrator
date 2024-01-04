@@ -33,12 +33,17 @@ fn on_session_collection(state: &RuntimeState) -> DiagnosticResponse {
     DiagnosticResponse::SessionCollection { 
         sessions
     }
-} 
+}
+
+fn on_environment(_state: &RuntimeState) -> DiagnosticResponse {
+    todo!()
+}
 
 fn process_request(state: &RuntimeState, request: &DiagnosticRequest) -> DiagnosticResponse {
     match request {
         DiagnosticRequest::ServerInformation => on_server_information(state),
         DiagnosticRequest::GetSessionCollection => on_session_collection(state),
+        DiagnosticRequest::GetEnvironment => on_environment(state),
     }
 }
 
