@@ -3,7 +3,6 @@ use tokio::sync::{oneshot, mpsc};
 pub enum DiagnosticRequest {
     ServerInformation,
     GetSessionCollection,
-    GetEnvironment,
 }
 
 pub enum DiagnosticResponse {
@@ -14,8 +13,6 @@ pub enum DiagnosticResponse {
     SessionCollection {
         sessions: Vec<u64>
     },
-    Environment {
-    }
 }
 
 pub struct DiagnosticMessage (

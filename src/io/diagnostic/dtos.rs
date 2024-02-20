@@ -2,6 +2,11 @@ use serde::Serialize;
 use crate::core::systems::diagnostic::messages::DiagnosticResponse;
 
 #[derive(Serialize)]
+pub struct SessionDetailsDTO {
+    pub session_id: u64,
+}
+
+#[derive(Serialize)]
 #[serde(untagged)]
 pub enum DTOs {
     ServerInformation {
@@ -9,10 +14,8 @@ pub enum DTOs {
         uptime: f64,
     },
     SessionCollection {
-        sessions: Vec<u64>,
+        sessions: Vec<SessionDetailsDTO>,
     },
-    Environment {
-    }
 }
 
 impl DiagnosticResponse {
@@ -23,10 +26,7 @@ impl DiagnosticResponse {
                 uptime: *uptime,
             },
             Self::SessionCollection { sessions } => DTOs::SessionCollection {
-                sessions: sessions.clone()
-            },
-            Self::Environment {} => DTOs::Environment {
-
+                sessions: vec![]
             },
         }
     }

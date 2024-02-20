@@ -24,19 +24,10 @@ pub async fn get_sessions(
     Json(res.to_dto())
 }
 
-pub async fn get_environment(
-    State(state): AppStateWrapper,
-) -> Json<DTOs> {
-    let request = DiagnosticRequest::GetEnvironment;
-    let res = state.send_request(request).await.unwrap();
-    Json(res.to_dto())
-}
-
 pub fn create_router(state: AppState) -> Router {
     let router = Router::new()
         .route("/", get(get_root))
         .route("/sessions", get(get_sessions))
-        .route("/environment", get(get_environment))
         .layer(CorsLayer::permissive()) //  FIX THIS
         .with_state(Arc::new(state));
 
