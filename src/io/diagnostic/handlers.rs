@@ -28,7 +28,7 @@ pub fn create_router(state: AppState) -> Router {
     let router = Router::new()
         .route("/", get(get_root))
         .route("/sessions", get(get_sessions))
-        .layer(CorsLayer::permissive()) //  FIX THIS
+        .layer(CorsLayer::permissive()) // TODO: correct with a reasonable Cors protection.
         .with_state(Arc::new(state));
 
     router

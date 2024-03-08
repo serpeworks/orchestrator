@@ -1,18 +1,14 @@
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 mod dtos;
 mod state;
 mod handlers;
 
-use axum::Router;
-use axum::routing::get;
 use tokio_util::sync::CancellationToken;
-use tower_http::cors::CorsLayer;
 
 
 use crate::core::systems::diagnostic::messages::DiagnosticMessageSender;
-use crate::io::diagnostic::handlers::{get_root, get_sessions, create_router};
+use crate::io::diagnostic::handlers::create_router;
 
 use self::state::AppState;
 

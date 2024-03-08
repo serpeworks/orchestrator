@@ -3,17 +3,16 @@
 pub mod domain;
 pub mod systems;
 
-pub mod configuration;
-
 use tracing::info;
-use crate::core::{configuration::Configuration, domain::state::RuntimeState, systems::{System, diagnostic::DiagnosticSystem}};
+use crate::core::{domain::state::RuntimeState, systems::{diagnostic::DiagnosticSystem, System}};
 
 use self::systems::diagnostic::messages::DiagnosticMessageReceiver;
+
+const FREQUENCY : u64 = 200;
 
 pub async fn start_core_task(
     rx: DiagnosticMessageReceiver,
     token: tokio_util::sync::CancellationToken,
-    configuration: Configuration,
 ) -> Result<(), ()> {
     // Create state and systems
     let mut state = RuntimeState::new(std::time::Instant::now());
@@ -21,7 +20,7 @@ pub async fn start_core_task(
         Box::new(DiagnosticSystem::new(rx))
     ];
    
-    let period = std::time::Duration::from_millis(1000 / configuration.frequency); 
+    let period = std::time::Duration::from_millis(1000 / FREQUENCY); 
 
     tracing::info!("Core Loop starting...");
     loop {

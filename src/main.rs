@@ -19,7 +19,6 @@ fn setup_tracing() {
 
 /// Initializes handlers for termination signals.
 /// Currently it only catches the SIGINT unix signal,
-/// TODO: but further consideration should be made on handling SIGTERM signals aswell.
 async fn setup_signal_handlers(
     token: CancellationToken
 ) {   
@@ -39,15 +38,10 @@ async fn setup_signal_handlers(
 async fn main() {
     use tokio::sync::mpsc;
 
-    use self::core::configuration::Configuration;
     setup_tracing();
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
-
-    let config = Configuration {
-        frequency: 200, 
-    };
 
     let (tx, rx) = mpsc::channel(256);
 
@@ -55,7 +49,6 @@ async fn main() {
         core::start_core_task(
             rx,
             token.clone(), 
-            config
         ),
         io::start_io_task(
             tx,

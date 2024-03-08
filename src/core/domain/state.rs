@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::Instant};
 
-use super::{session::{Session, SessionState}, coords::Coords};
+use super::session::{Session, SessionState};
 
 
 pub struct RuntimeState {
@@ -35,7 +35,6 @@ impl RuntimeState {
         let session = Session {
             session_id,
             state: SessionState::IDLE,
-            coordinates: Coords::new(0.0, 0.0, 0.0),
         };
 
         // Save Session
@@ -59,21 +58,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn register_a_session_on_empty_state() {
+    fn registering_new_session() {
         // Arrange
-        // A newly created state
         let mut state = RuntimeState::new(Instant::now());
 
         // Act
-        // Register a new session on the state
         let result = state.register_session();
 
         // Assert
-        // The result was problem free and returned a new id
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn registering_session_then_retrieve_it() {
+        // Arrange
+        let mut state = RuntimeState::new(Instant::now());
+        let result = state.register_session();
         let session_id = result.expect("Expected the result to be ok!");
+
+        // Act
+        let session = state.obtain_session(&session_id);
+
+        // Assert
+        assert!(session.is_some(), "Retrieving session was not possible!");
+    }
+
+    #[test]
+    fn registering_session_then_retrieving_it_has_same_id() {
+        // Arrange
+        let mut state = RuntimeState::new(Instant::now());
+        let result = state.register_session();
+        let session_id = result.expect("Expected the result to be ok!");
+
+        // Act
+        let session = state.obtain_session(&session_id).expect("Session should be present!");
         
-        // TODO: The result ID can be looked up on the state
-        let _session = state.obtain_session(&session_id);
+        // Assert
+        assert_eq!(session_id, session.session_id);
     }
 }

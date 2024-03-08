@@ -25,7 +25,7 @@ impl AppState {
         request: DiagnosticRequest,
     ) -> Result<DiagnosticResponse, ()> {
         let (tx, rx) = oneshot::channel(); 
-        let msg = DiagnosticMessage(tx, request);
+        let msg = DiagnosticMessage::new(tx, request);
         let _ = self.tx.send(msg).await;
         
         let response = rx.await.unwrap();

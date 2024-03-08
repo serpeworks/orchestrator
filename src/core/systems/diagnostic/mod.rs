@@ -1,7 +1,7 @@
 pub mod messages; 
 
 use crate::core::domain::state::RuntimeState;
-use self::messages::{DiagnosticMessageReceiver, DiagnosticRequest, DiagnosticResponse, DiagnosticMessage};
+use self::messages::{DiagnosticMessageReceiver, DiagnosticRequest, DiagnosticResponse};
 
 use super::System;
 
@@ -27,7 +27,7 @@ fn on_server_information(state: &RuntimeState) -> DiagnosticResponse {
 
 fn on_session_collection(state: &RuntimeState) -> DiagnosticResponse {
     let sessions = state.sessions.iter()
-        .map(|item| { return *item.0 })
+        .map(|(session_id, session)| { (session_id.clone(), session.state.clone()) })
         .collect();
 
     DiagnosticResponse::SessionCollection { 
@@ -44,9 +44,9 @@ fn process_request(state: &RuntimeState, request: &DiagnosticRequest) -> Diagnos
 
 impl System for DiagnosticSystem {
     fn observe(&mut self, state: &RuntimeState) {
-        let _ = self.receiver.try_recv().ok().map(|DiagnosticMessage(tx, request)| {
-            let response = process_request(&state, &request);
-            let _ = tx.send(response);
+        let _ = self.receiver.try_recv().ok().map(|msg| {
+            let response = process_request(&state, &msg.request);
+            let _ = msg.send_response(response);
         });
     }
 
