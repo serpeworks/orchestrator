@@ -7,8 +7,7 @@ mod handlers;
 use tokio_util::sync::CancellationToken;
 
 
-use crate::core::systems::diagnostic::messages::DiagnosticMessageSender;
-use crate::io::diagnostic::handlers::create_router;
+use crate::{core::diagnostic::messages::DiagnosticMessageSender, io::diagnostic::handlers::create_router};
 
 use self::state::AppState;
 

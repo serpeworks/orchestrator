@@ -8,8 +8,7 @@ mod io;
 /// This heavily ties the server with the tracing module for operation.
 fn setup_tracing() {
     let subscriber = tracing_subscriber::fmt()
-        .with_line_number(true)
-        .with_thread_ids(true)
+        .with_line_number(true) .with_thread_ids(true)
         .compact()
         .finish();
 
@@ -32,28 +31,28 @@ async fn setup_signal_handlers(
     });
 }
 
+const DIAGNOSTIC_CHANNEL_SIZE: usize = 256;
 
 #[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
-    use tokio::sync::mpsc;
 
     setup_tracing();
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
-    let (tx, rx) = mpsc::channel(256);
+    // init channels
+    let (tx, rx) = tokio::sync::mpsc::channel(DIAGNOSTIC_CHANNEL_SIZE);
 
     let _ = tokio::join!(
         core::start_core_task(
+            token.clone(),
             rx,
-            token.clone(), 
         ),
         io::start_io_task(
-            tx,
             token.clone(),
+            tx,
         )
     );
 }
-

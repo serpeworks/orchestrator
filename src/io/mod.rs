@@ -2,18 +2,21 @@
 ///
 
 mod diagnostic;
+mod communication;
 
-use crate::{io::diagnostic::run_diagnostic_server, core::systems::diagnostic::messages::DiagnosticMessageSender};
+use crate::core::diagnostic::messages::DiagnosticMessageSender;
 
-const DIAGNOSTIC_PORT: u16 = 8080;
+use self::diagnostic::run_diagnostic_server;
+
+const DIAGNOSTIC_PORT : u16 = 8080;
 
 pub async fn start_io_task(
-    tx: DiagnosticMessageSender,
     token: tokio_util::sync::CancellationToken,
+    diagnostic_message_sender : DiagnosticMessageSender,
 ) -> Result<(), ()> {
 
     run_diagnostic_server(
-        tx,
+        diagnostic_message_sender,
         DIAGNOSTIC_PORT,
         token.clone()
     ).await;

@@ -4,7 +4,7 @@ use axum::routing::get;
 use axum::{extract::State, Json, Router};
 use tower_http::cors::CorsLayer;
 
-use crate::core::systems::diagnostic::messages::DiagnosticRequest;
+use crate::core::diagnostic::messages::DiagnosticRequest;
 
 use super::{dtos::DTOs, state::{AppStateWrapper, AppState}};
 
@@ -19,7 +19,7 @@ pub async fn get_root(
 pub async fn get_sessions(
     State(state): AppStateWrapper,
 ) -> Json<DTOs> {
-    let request = DiagnosticRequest::GetSessionCollection;
+    let request = DiagnosticRequest::SessionCollection; 
     let res = state.send_request(request).await.unwrap();
     Json(res.to_dto())
 }
@@ -33,5 +33,4 @@ pub fn create_router(state: AppState) -> Router {
 
     router
 }
-
 

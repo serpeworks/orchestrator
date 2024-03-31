@@ -1,47 +1,61 @@
-/// Core module for the Drones Server
+use bevy_ecs::prelude::*;
 
-pub mod domain;
-pub mod systems;
+use crate::core::{communication::system_communication, diagnostic::system_diagnostic};
 
-use tracing::info;
-use crate::core::{domain::state::RuntimeState, systems::{diagnostic::DiagnosticSystem, System}};
+use self::diagnostic::messages::DiagnosticMessageReceiver;
 
-use self::systems::diagnostic::messages::DiagnosticMessageReceiver;
+pub mod diagnostic;
+pub mod communication;
+mod domain;
 
-const FREQUENCY : u64 = 200;
+const PERIOD : u64 = 100;
 
 pub async fn start_core_task(
-    rx: DiagnosticMessageReceiver,
     token: tokio_util::sync::CancellationToken,
+    diagnostic_message_receiver: DiagnosticMessageReceiver
 ) -> Result<(), ()> {
     // Create state and systems
-    let mut state = RuntimeState::new(std::time::Instant::now());
-    let mut systems : Vec<Box<dyn System>> = vec![
-        Box::new(DiagnosticSystem::new(rx))
-    ];
-   
-    let period = std::time::Duration::from_millis(1000 / FREQUENCY); 
-
     tracing::info!("Core Loop starting...");
+
+    let mut world = bevy_ecs::world::World::default();
+    initialize_resources(&mut world, diagnostic_message_receiver);
+    let mut schedule = bevy_ecs::schedule::Schedule::default();
+
+    // Add systems to the schedule
+    schedule.add_systems((system_diagnostic, system_communication).chain());
+
     loop {
         let start = std::time::Instant::now();
         if token.is_cancelled() {
             break
         }
-        
-        // First do observation step
-        systems.iter_mut().for_each(|sys| sys.observe(&state));
 
-        // Perform affect step
-        systems.iter_mut().for_each(|sys| sys.affect(&mut state));
-        
+        schedule.run(&mut world);
 
-        sleep(period, start.elapsed()).await;
+        let ellapsed = start.elapsed();
+        sleep(std::time::Duration::from_millis(PERIOD), ellapsed).await;
     }
 
-    info!("Core Task finishing.");
+    tracing::info!("Core Task finishing.");
 
     return Ok(());
+}
+
+fn initialize_resources(
+    world: &mut World,
+    diagnostic_message_receiver: DiagnosticMessageReceiver
+) {
+    if !world.contains_resource::<domain::GenericResource>() {
+        world.insert_resource(domain::GenericResource {
+            start_time: std::time::Instant::now(),
+        });
+    }
+
+    if !world.contains_resource::<diagnostic::DiagnosticResource>() {
+        world.insert_resource(
+            diagnostic::DiagnosticResource::new(diagnostic_message_receiver)
+        );
+    }
 }
 
 async fn sleep(period: std::time::Duration, ellapsed: std::time::Duration) {

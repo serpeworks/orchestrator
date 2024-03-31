@@ -2,7 +2,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use tokio::sync::oneshot;
 
-use crate::core::systems::diagnostic::messages::{DiagnosticMessageSender, DiagnosticRequest, DiagnosticResponse, DiagnosticMessage};
+use crate::core::diagnostic::messages::{DiagnosticMessage, DiagnosticMessageSender, DiagnosticRequest, DiagnosticResponse};
 
 pub type AppStateWrapper = State<Arc<AppState>>;
 
@@ -25,7 +25,7 @@ impl AppState {
         request: DiagnosticRequest,
     ) -> Result<DiagnosticResponse, ()> {
         let (tx, rx) = oneshot::channel(); 
-        let msg = DiagnosticMessage::new(tx, request);
+        let msg = DiagnosticMessage(tx, request);
         let _ = self.tx.send(msg).await;
         
         let response = rx.await.unwrap();

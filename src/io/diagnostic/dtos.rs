@@ -1,10 +1,11 @@
 use serde::Serialize;
-use crate::core::{domain::session::SessionState, systems::diagnostic::messages::DiagnosticResponse};
+
+use crate::core::diagnostic::messages::DiagnosticResponse;
 
 #[derive(Serialize)]
 pub struct SessionDetailsDTO {
     pub session_id: u64,
-    pub drone_state: String,
+    pub session_state: String,
 }
 
 #[derive(Serialize)]
@@ -23,14 +24,6 @@ trait ToDTO<T>{
     fn to_dto(&self) -> T;
 }
 
-impl ToDTO<String> for SessionState {
-    fn to_dto(&self) -> String {
-        match self {
-            SessionState::IDLE => "IDLE".to_string()
-        }
-    }
-}
-
 impl DiagnosticResponse {
     pub fn to_dto(&self) -> DTOs {
         match self {
@@ -38,15 +31,17 @@ impl DiagnosticResponse {
                 version: version.clone(),
                 uptime: *uptime,
             },
-            Self::SessionCollection { sessions } => DTOs::SessionCollection {
-                sessions: sessions.iter()
-                    .map(|(session_id, session_state)| 
-                        SessionDetailsDTO {
-                            session_id: session_id.clone(),
-                            drone_state: session_state.to_dto()
-                        }
-                    ).collect()
-            },
+            Self::SessionCollection {sessions} => {
+                let sessions = sessions.iter().map(|session_id| {
+                    SessionDetailsDTO {
+                        session_id: *session_id,
+                        session_state: "TODO".to_string(),
+                    }
+                }).collect();
+                DTOs::SessionCollection {
+                    sessions,
+                }
+            }
         }
     }
 }
