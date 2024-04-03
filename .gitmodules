@@ -1,0 +1,3 @@
+[submodule "crates/serpelink"]
+	path = crates/serpelink
+	url = https://github.com/serpeworks/serpelink

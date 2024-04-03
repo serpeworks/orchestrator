@@ -12,6 +12,7 @@ fn setup_tracing() {
         .compact()
         .finish();
 
+
     tracing::subscriber::set_global_default(subscriber)
         .expect("Setting default subscriber failed.");
 }
@@ -22,8 +23,7 @@ async fn setup_signal_handlers(
     token: CancellationToken
 ) {   
     // for ctrl-c
-    #[cfg(unix)]
-    tokio::spawn(async move {
+    #[cfg(unix)] tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
         info!("Ctrl-C Signal received! Gracefully shutting down.");
         token.cancel();

@@ -4,7 +4,7 @@
 mod diagnostic;
 mod communication;
 
-use crate::core::diagnostic::messages::DiagnosticMessageSender;
+use crate::{core::diagnostic::messages::DiagnosticMessageSender, io::communication::listen_for_messages};
 
 use self::diagnostic::run_diagnostic_server;
 
@@ -21,7 +21,8 @@ pub async fn start_io_task(
             diagnostic_message_sender,
             DIAGNOSTIC_PORT,
             token.clone()
-        )
+        ),
+        listen_for_messages(token.clone())
     );
 
     return Ok(());

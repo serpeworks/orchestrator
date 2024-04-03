@@ -5,7 +5,14 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = [
+    "crates/*",
+]
+
 [dependencies]
+serpelink = { path = "crates/serpelink" }
+
 # Utilities
 futures = "0.3.28"
 
@@ -29,4 +36,5 @@ geo = "0.26.0"
 geo-types = "0.7.11"
 
 rocket = "0.5.0"
+
 
