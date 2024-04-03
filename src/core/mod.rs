@@ -2,32 +2,29 @@ use bevy_ecs::prelude::*;
 
 use crate::core::{communication::system_communication, diagnostic::system_diagnostic};
 
-use self::diagnostic::messages::DiagnosticMessageReceiver;
+use self::{communication::system_communication_entry, diagnostic::messages::DiagnosticMessageReceiver};
 
-pub mod diagnostic;
 pub mod communication;
-mod domain;
+pub mod diagnostic;
+pub mod domain;
 
-const PERIOD : u64 = 100;
+const PERIOD: u64 = 20;
 
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken,
-    diagnostic_message_receiver: DiagnosticMessageReceiver
+    diagnostic_message_receiver: DiagnosticMessageReceiver,
+    communication_message_receiver: tokio::sync::mpsc::Receiver<()>,
 ) -> Result<(), ()> {
     // Create state and systems
     tracing::info!("Core Loop starting...");
 
-    let mut world = bevy_ecs::world::World::default();
-    initialize_resources(&mut world, diagnostic_message_receiver);
-    let mut schedule = bevy_ecs::schedule::Schedule::default();
-
-    // Add systems to the schedule
-    schedule.add_systems((system_diagnostic, system_communication).chain());
+    let mut world = initialize_world(diagnostic_message_receiver, communication_message_receiver);
+    let mut schedule = create_schedule();
 
     loop {
         let start = std::time::Instant::now();
         if token.is_cancelled() {
-            break
+            break;
         }
 
         schedule.run(&mut world);
@@ -41,21 +38,40 @@ pub async fn start_core_task(
     return Ok(());
 }
 
-fn initialize_resources(
-    world: &mut World,
-    diagnostic_message_receiver: DiagnosticMessageReceiver
-) {
-    if !world.contains_resource::<domain::GenericResource>() {
-        world.insert_resource(domain::GenericResource {
-            start_time: std::time::Instant::now(),
-        });
-    }
+fn initialize_world(
+    diagnostic_message_receiver: DiagnosticMessageReceiver,
+    _communication_message_receiver: tokio::sync::mpsc::Receiver<()>,
+) -> World {
+    let mut world = World::default();
 
-    if !world.contains_resource::<diagnostic::DiagnosticResource>() {
-        world.insert_resource(
-            diagnostic::DiagnosticResource::new(diagnostic_message_receiver)
-        );
-    }
+    initialize_resources(&mut world, diagnostic_message_receiver);
+
+    world
+}
+
+fn create_schedule() -> Schedule {
+    let mut schedule = Schedule::default();
+
+    schedule.add_systems(
+        (
+            system_diagnostic,
+            system_communication,
+            system_communication_entry,
+        ).chain(),
+    );
+
+    schedule
+}
+
+fn initialize_resources(world: &mut World, diagnostic_message_receiver: DiagnosticMessageReceiver) {
+    world.insert_resource(domain::GenericResource {
+        state: Default::default(),
+        start_time: std::time::Instant::now(),
+    });
+
+    world.insert_resource(diagnostic::DiagnosticResource::new(
+        diagnostic_message_receiver,
+    ));
 }
 
 async fn sleep(period: std::time::Duration, ellapsed: std::time::Duration) {

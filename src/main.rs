@@ -27,11 +27,11 @@ async fn setup_signal_handlers(
         tokio::signal::ctrl_c().await.unwrap();
         info!("Ctrl-C Signal received! Gracefully shutting down.");
         token.cancel();
-        info!("Shut down finalized.");
     });
 }
 
 const DIAGNOSTIC_CHANNEL_SIZE: usize = 256;
+const COMMUNICATION_CHANNEL_SIZE: usize = 256;
 
 #[cfg(target_os = "linux")]
 #[tokio::main]
@@ -42,17 +42,19 @@ async fn main() {
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
-    // init channels
-    let (tx, rx) = tokio::sync::mpsc::channel(DIAGNOSTIC_CHANNEL_SIZE);
+    let (diagnostic_tx, diagnostic_rx) = tokio::sync::mpsc::channel(DIAGNOSTIC_CHANNEL_SIZE);
+    let (communication_tx, communication_rx) = tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
 
     let _ = tokio::join!(
         core::start_core_task(
             token.clone(),
-            rx,
+            diagnostic_rx,
+            communication_rx,
         ),
         io::start_io_task(
             token.clone(),
-            tx,
+            diagnostic_tx,
+            communication_tx,
         )
     );
 }

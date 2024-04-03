@@ -6,13 +6,14 @@ use tower_http::cors::CorsLayer;
 
 use crate::core::diagnostic::messages::DiagnosticRequest;
 
+use super::dtos::ToDTO;
 use super::{dtos::DTOs, state::{AppStateWrapper, AppState}};
 
 pub async fn get_root(
     State(state): AppStateWrapper,
 ) -> Json<DTOs> {
     let request = DiagnosticRequest::ServerInformation; 
-    let res = state.send_request(request).await.unwrap();
+    let res = state.send_request(request).await;
     Json(res.to_dto())
 }
 
@@ -20,7 +21,7 @@ pub async fn get_sessions(
     State(state): AppStateWrapper,
 ) -> Json<DTOs> {
     let request = DiagnosticRequest::SessionCollection; 
-    let res = state.send_request(request).await.unwrap();
+    let res = state.send_request(request).await;
     Json(res.to_dto())
 }
 

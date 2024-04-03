@@ -2,34 +2,34 @@ use std::time::Instant;
 
 use bevy_ecs::{bundle::Bundle, component::Component, system::Resource};
 
-#[allow(dead_code)]
-#[derive(Default)]
-enum OrchestratorState {
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OrchestratorState {
     #[default]
     Booting,
     Running,
-    ShuttingDown,
+    Stopping,
 }
 
 #[derive(Default)]
 pub enum SessionState {
     #[default]
-    _Idle,
+    Idle,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Session {
     pub session_id: u64,
     pub session_state: SessionState,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 pub struct SessionBundle {
     pub session: Session,
 }
 
 #[derive(Resource)]
 pub struct GenericResource {
+    pub state: OrchestratorState,
     pub start_time: Instant,
 }
 

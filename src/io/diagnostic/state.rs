@@ -4,6 +4,12 @@ use tokio::sync::oneshot;
 
 use crate::core::diagnostic::messages::{DiagnosticMessage, DiagnosticMessageSender, DiagnosticRequest, DiagnosticResponse};
 
+#[derive(Debug)]
+pub enum RequestError {
+    GenericError,
+    _TooManyRequests,
+}
+
 pub type AppStateWrapper = State<Arc<AppState>>;
 
 pub struct AppState {
@@ -23,11 +29,14 @@ impl AppState {
     pub async fn send_request(
         &self,
         request: DiagnosticRequest,
-    ) -> Result<DiagnosticResponse, ()> {
+    ) -> Result<DiagnosticResponse, RequestError> {
         let (tx, rx) = oneshot::channel(); 
         let msg = DiagnosticMessage(tx, request);
-        let _ = self.tx.send(msg).await;
-        
+        match self.tx.try_send(msg) {
+            Ok(_) => {},
+            Err(_) => return Err(RequestError::GenericError),
+        }
+
         let response = rx.await.unwrap();
         Ok(response)
     }

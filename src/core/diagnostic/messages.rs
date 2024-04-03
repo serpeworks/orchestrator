@@ -1,6 +1,8 @@
 
 use tokio::sync::{oneshot, mpsc};
 
+use crate::core::domain::OrchestratorState;
+
 #[derive(Debug)]
 pub enum DiagnosticRequest {
     ServerInformation,
@@ -9,6 +11,7 @@ pub enum DiagnosticRequest {
 
 pub enum DiagnosticResponse {
     ServerInformation {
+        state: OrchestratorState,
         version: String,
         uptime: f64,
     },

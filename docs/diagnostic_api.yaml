@@ -20,17 +20,14 @@ paths:
       responses:
         '200':
           description: Session List
-  /environment:
-    get:
-      summary: Playing Environment Data
-      responses:
-        '200':
-          description: Environment Data
 components:
   schemas:
     ServerStatus:
       type: object
       properties:
+        state:
+          type: string
+          enum: [BOOTING, RUNNING, STOPPING]
         uptime:
           type: number 
         version:

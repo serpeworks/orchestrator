@@ -13,13 +13,16 @@ const DIAGNOSTIC_PORT : u16 = 8080;
 pub async fn start_io_task(
     token: tokio_util::sync::CancellationToken,
     diagnostic_message_sender : DiagnosticMessageSender,
+    _communication_message_sender : tokio::sync::mpsc::Sender<()>,
 ) -> Result<(), ()> {
 
-    run_diagnostic_server(
-        diagnostic_message_sender,
-        DIAGNOSTIC_PORT,
-        token.clone()
-    ).await;
+    let _ = tokio::join!(
+        run_diagnostic_server(
+            diagnostic_message_sender,
+            DIAGNOSTIC_PORT,
+            token.clone()
+        )
+    );
 
     return Ok(());
 }
