@@ -4,6 +4,12 @@ use tracing::info;
 pub mod core;
 mod io;
 
+mod mavlink {
+    include!(concat!(env!("OUT_DIR"), "/mavlink/mod.rs"));
+}
+
+pub use mavlink::dialects;
+
 /// Setups the tracing module with a global default subscriber.
 /// This heavily ties the server with the tracing module for operation.
 fn setup_tracing() {

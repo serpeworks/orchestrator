@@ -1,7 +1,9 @@
-use futures::StreamExt;
 
-use tokio::net::TcpListener;
-use tokio_util::codec::Framed;
+use mavio::{protocol::V2, AsyncReceiver};
+use tokio::{io::{AsyncRead, AsyncWrite}, net::{TcpListener, TcpSocket, TcpStream}};
+
+use crate::mavlink;
+
 
 pub async fn listen_for_messages(
     token: tokio_util::sync::CancellationToken, 
@@ -15,35 +17,46 @@ pub async fn listen_for_messages(
                 break
             }
 
-            tracing::info!("Listening for incoming connections on {}", address);
-            let (socket, _) = listener.accept().await.unwrap();
-            tracing::info!("Accepted connection from {:?}", socket.peer_addr().unwrap());
-            tokio::spawn(listen(socket));
+            let (stream, _) = listener.accept().await.unwrap();
+
+            launch_communication_tasks(stream).await;
         }
     });
 }
 
-const BUFFER_SIZE: usize = 1024;
-
-async fn listen(
-    socket: tokio::net::TcpStream,
+async fn launch_communication_tasks(
+    stream: TcpStream 
 ) {
-    let mut _buffer = [0; BUFFER_SIZE];
-    let serpelink_codec = serpelink::serpe::codecs::SerpeCodec;
-    
-    let mut framed = Framed::new(socket, serpelink_codec);
+    let (reader, writer) = stream.into_split();
 
+    tokio::spawn(listen(reader));
+    tokio::spawn(write_to(writer));
+}
 
-    while let Some(message) = framed.next().await {
-        match message {
-            Ok(message) => {
-                tracing::info!("Received message: {:?}", message);
+async fn listen<R: AsyncRead + Unpin>(
+    reader: R,
+) -> mavio::error::Result<()> {
+    let mut receiver = AsyncReceiver::versioned(reader, V2);
+    loop {
+        let frame = receiver.recv().await?;
+        tracing::info!("Exiting listen loop");
+
+        match frame.decode() {
+            Ok(msg) => {
+                if let mavlink::dialects::SerpeDialect::Heartbeat(msg) = msg {
+                    tracing::info!("Heartbeat message: {:?}", msg);
+                }
             }
-            Err(e) => {
-                tracing::error!("Error while receiving message: {:?}", e);
+            Err(_) => {
+                tracing::error!("Failed to decode message");
             }
         }
     }
-
-    tracing::info!("Connection closed");
 }
+
+async fn write_to<W: AsyncWrite + Unpin>(
+    writer: W,
+) {
+}
+
+
