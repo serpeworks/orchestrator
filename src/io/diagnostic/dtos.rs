@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::Serialize;
 
 use crate::core::{diagnostic::messages::DiagnosticResponse, domain::OrchestratorState};
@@ -24,7 +26,7 @@ pub enum DTOs {
     Error {
         title: String,
         status: u32,
-    }
+    },
 }
 
 pub trait ToDTO {
@@ -34,32 +36,35 @@ pub trait ToDTO {
 impl ToDTO for DiagnosticResponse {
     fn to_dto(&self) -> DTOs {
         match self {
-            Self::ServerInformation {state, version, uptime} => DTOs::ServerInformation {
-                state: state.to_string(), 
+            Self::ServerInformation {
+                state,
+                version,
+                uptime,
+            } => DTOs::ServerInformation {
+                state: state.to_string(),
                 version: version.clone(),
                 uptime: *uptime,
             },
-            Self::SessionCollection {sessions} => {
-                let sessions = sessions.iter().map(|session_id| {
-                    SessionDetailsDTO {
+            Self::SessionCollection { sessions } => {
+                let sessions = sessions
+                    .iter()
+                    .map(|session_id| SessionDetailsDTO {
                         session_id: *session_id,
                         session_state: "TODO".to_string(),
-                    }
-                }).collect();
-                DTOs::SessionCollection {
-                    sessions,
-                }
+                    })
+                    .collect();
+                DTOs::SessionCollection { sessions }
             }
         }
     }
 }
 
-impl OrchestratorState {
-    fn to_string(&self) -> String {
+impl fmt::Display for OrchestratorState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Booting => String::from("BOOTING"),
-            Self::Running => String::from("RUNNING"),
-            Self::Stopping => String::from("STOPPING"),
+            Self::Booting => write!(f, "BOOTING"),
+            Self::Running => write!(f, "RUNNING"),
+            Self::Stopping => write!(f, "STOPPING"),
         }
     }
 }
@@ -74,7 +79,7 @@ impl ToDTO for RequestError {
             Self::_TooManyRequests => DTOs::Error {
                 title: "Too Many Requests".to_string(),
                 status: 429,
-            }
+            },
         }
     }
 }

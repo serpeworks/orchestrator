@@ -30,7 +30,10 @@ pub fn system_diagnostic(
     resource: Res<GenericResource>,
     sessions: Query<&Session>,
 ) {
-    let _ = diagnostic_resource.receiver.try_recv().ok()
+    let _ = diagnostic_resource
+        .receiver
+        .try_recv()
+        .ok()
         .map(|DiagnosticMessage(tx, request)| {
             let response = process_request(&request, sessions, &resource);
             let _ = tx.send(response);
@@ -43,7 +46,7 @@ fn process_request(
     generic_resource: &GenericResource,
 ) -> DiagnosticResponse {
     match request {
-        DiagnosticRequest::ServerInformation => on_server_information(&generic_resource),
+        DiagnosticRequest::ServerInformation => on_server_information(generic_resource),
         DiagnosticRequest::SessionCollection => on_session_collection(sessions),
     }
 }

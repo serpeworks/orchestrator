@@ -1,5 +1,4 @@
-
-use tokio::sync::{oneshot, mpsc};
+use tokio::sync::{mpsc, oneshot};
 
 use crate::core::domain::OrchestratorState;
 
@@ -17,14 +16,13 @@ pub enum DiagnosticResponse {
     },
     SessionCollection {
         sessions: Vec<u64>,
-    }
+    },
 }
 
-pub struct DiagnosticMessage (
-    pub oneshot::Sender<DiagnosticResponse>, 
+pub struct DiagnosticMessage(
+    pub oneshot::Sender<DiagnosticResponse>,
     pub DiagnosticRequest,
 );
 
 pub type DiagnosticMessageSender = mpsc::Sender<DiagnosticMessage>;
 pub type DiagnosticMessageReceiver = mpsc::Receiver<DiagnosticMessage>;
-

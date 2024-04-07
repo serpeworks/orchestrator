@@ -32,4 +32,3 @@ pub struct GenericResource {
     pub state: OrchestratorState,
     pub start_time: Instant,
 }
-

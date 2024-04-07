@@ -1,7 +1,4 @@
-use bevy_ecs::{
-    schedule::Schedule,
-    world::World,
-};
+use bevy_ecs::{schedule::Schedule, world::World};
 use tokio::sync::mpsc;
 
 use super::{messages::DiagnosticMessage, system_diagnostic, DiagnosticResource, GenericResource};
