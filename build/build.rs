@@ -5,7 +5,7 @@ use mavspec::rust::gen::BuildHelper;
 
 fn main() {
     // Assume that your library and `message_definitions` are both in the root of your project.
-    let sources = vec!["./dialects/serpe-dialect"];
+    let sources = vec!["./serpe-dialect"];
     // Output path
     let destination = Path::new(&var("OUT_DIR").unwrap()).join("mavlink");
     // Path to your `Cargo.toml` manifest

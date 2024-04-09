@@ -12,7 +12,6 @@ pub struct DiagnosticFixture {
 impl DiagnosticFixture {
     pub fn new() -> Self {
         let mut world = World::default();
-        let mut schedule = Schedule::default();
 
         let (tx, receiver) = mpsc::channel(1);
         world.insert_resource(DiagnosticResource { receiver });
@@ -22,6 +21,7 @@ impl DiagnosticFixture {
             start_time: std::time::Instant::now(),
         });
 
+        let mut schedule = Schedule::default();
         schedule.add_systems(system_diagnostic);
 
         DiagnosticFixture {

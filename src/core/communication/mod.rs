@@ -1,35 +1,37 @@
-use bevy_ecs::{
-    component::Component,
-    system::{Res, ResMut, Resource},
-};
+use bevy_ecs::{component::Component, system::Resource};
 
 use crate::dialects::SerpeDialect;
 
-use super::domain::GenericResource;
+#[cfg(test)]
+mod tests;
 
-pub struct CommunicationPipes {
-    pub receiver: tokio::sync::mpsc::Receiver<SerpeDialect>,
-    pub transmitter: tokio::sync::mpsc::Sender<SerpeDialect>,
-}
+pub type SerpeDialectReceiver = tokio::sync::mpsc::Receiver<SerpeDialect>;
+pub type SerpeDialectSender = tokio::sync::mpsc::Sender<SerpeDialect>;
 
 #[derive(Component)]
 struct SessionSocket {
-    _pipes: CommunicationPipes,
+    _incoming_receiver: SerpeDialectReceiver,
+    _outgoing_sender: SerpeDialectSender,
 }
 
 #[derive(Resource)]
 pub struct CommunicationResource {
-    _receiver: tokio::sync::mpsc::Receiver<CommunicationPipes>,
+    incoming_receiver: SerpeDialectReceiver,
+    outgoing_sender: SerpeDialectSender,
 }
 
 impl CommunicationResource {
-    pub fn new(_receiver: tokio::sync::mpsc::Receiver<CommunicationPipes>) -> Self {
-        CommunicationResource { _receiver }
+    pub fn new(
+        incoming_receiver: SerpeDialectReceiver,
+        outgoing_sender: SerpeDialectSender,
+    ) -> Self {
+        CommunicationResource {
+            incoming_receiver,
+            outgoing_sender,
+        }
     }
 }
 
-pub fn system_communication(
-    _communication_resource: ResMut<CommunicationResource>,
-    _resource: Res<GenericResource>,
-) {
+pub fn system_communication() {
+    // Handle new registrations
 }

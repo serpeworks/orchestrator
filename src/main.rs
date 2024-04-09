@@ -47,11 +47,18 @@ async fn main() {
     setup_signal_handlers(token.clone()).await;
 
     let (diagnostic_tx, diagnostic_rx) = tokio::sync::mpsc::channel(DIAGNOSTIC_CHANNEL_SIZE);
-    let (communication_tx, communication_rx) =
+    let (communication_outgoing_tx, _communication_outgoing_rx) =
+        tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
+    let (communication_incoming_tx, communication_incoming_rx) =
         tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
 
     let _ = tokio::join!(
-        core::start_core_task(token.clone(), diagnostic_rx, communication_rx,),
-        io::start_io_task(token.clone(), diagnostic_tx, communication_tx,)
+        core::start_core_task(
+            token.clone(),
+            diagnostic_rx,
+            communication_incoming_rx,
+            communication_outgoing_tx,
+        ),
+        io::start_io_task(token.clone(), diagnostic_tx, communication_incoming_tx,)
     );
 }

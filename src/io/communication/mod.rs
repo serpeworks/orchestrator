@@ -4,12 +4,10 @@ use tokio::{
     net::{TcpListener, TcpStream},
 };
 
-use crate::{core::communication::CommunicationPipes, dialects::SerpeDialect, mavlink};
+use crate::core::communication::SerpeDialectSender;
 
-const CHANNEL_SIZE: usize = 256;
-
-pub async fn listen_for_messages(
-    _communication_message_sender: tokio::sync::mpsc::Sender<CommunicationPipes>,
+pub async fn run_communication_server(
+    _communication_message_sender: SerpeDialectSender,
     token: tokio_util::sync::CancellationToken,
 ) {
     let address = "127.0.0.1:8000";
@@ -21,41 +19,31 @@ pub async fn listen_for_messages(
                 break;
             }
 
-            let (stream, _) = listener.accept().await.unwrap();
-            let (_incoming_writer, _incoming_reader) =
-                tokio::sync::mpsc::channel::<SerpeDialect>(CHANNEL_SIZE);
-            let (_outgoing_writer, _outgoing_reader) =
-                tokio::sync::mpsc::channel::<SerpeDialect>(CHANNEL_SIZE);
-
-            launch_communication_tasks(stream).await;
+            match listener.accept().await {
+                Ok((stream, _)) => {
+                    tokio::spawn(handle_connection(stream));
+                }
+                Err(e) => {
+                    tracing::error!("Error accepting connection: {:?}", e);
+                }
+            }
         }
     });
 }
 
-async fn launch_communication_tasks(stream: TcpStream) {
-    let (reader, writer) = stream.into_split();
+async fn handle_connection(stream: TcpStream) {
+    let (_reader, _writer) = stream.into_split();
 
-    tokio::spawn(listen(reader));
-    tokio::spawn(write_to(writer));
+    let listen_handle = tokio::spawn(_listen(_reader));
+    let write_handle = tokio::spawn(_write(_writer));
+
+    let _ = tokio::join!(listen_handle, write_handle);
 }
 
-async fn listen<R: AsyncRead + Unpin>(reader: R) -> mavio::error::Result<()> {
-    let mut receiver = AsyncReceiver::versioned(reader, V2);
-    loop {
-        let frame = receiver.recv().await?;
-        tracing::info!("Exiting listen loop");
+async fn _listen<R: AsyncRead + Unpin>(reader: R) -> mavio::error::Result<()> {
+    let mut _receiver = AsyncReceiver::versioned(reader, V2);
 
-        match frame.decode() {
-            Ok(msg) => {
-                if let mavlink::dialects::SerpeDialect::Heartbeat(msg) = msg {
-                    tracing::info!("Heartbeat message: {:?}", msg);
-                }
-            }
-            Err(_) => {
-                tracing::error!("Failed to decode message");
-            }
-        }
-    }
+    Ok(())
 }
 
-async fn write_to<W: AsyncWrite + Unpin>(_writer: W) {}
+async fn _write<W: AsyncWrite + Unpin>(_writer: W) {}

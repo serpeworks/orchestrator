@@ -2,7 +2,10 @@ use bevy_ecs::prelude::*;
 
 use crate::core::{communication::system_communication, diagnostic::system_diagnostic};
 
-use self::{communication::CommunicationPipes, diagnostic::messages::DiagnosticMessageReceiver};
+use self::{
+    communication::{SerpeDialectReceiver, SerpeDialectSender},
+    diagnostic::messages::DiagnosticMessageReceiver,
+};
 
 pub mod communication;
 pub mod diagnostic;
@@ -13,12 +16,17 @@ const PERIOD: u64 = 10;
 pub async fn start_core_task(
     token: tokio_util::sync::CancellationToken,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_message_receiver: tokio::sync::mpsc::Receiver<CommunicationPipes>,
+    communication_incoming_message_receiver: SerpeDialectReceiver,
+    communication_outgoing_message_sender: SerpeDialectSender,
 ) -> Result<(), ()> {
     // Create state and systems
     tracing::info!("Core Loop starting...");
 
-    let mut world = initialize_world(diagnostic_message_receiver, communication_message_receiver);
+    let mut world = initialize_world(
+        diagnostic_message_receiver,
+        communication_incoming_message_receiver,
+        communication_outgoing_message_sender,
+    );
     let mut schedule = create_schedule();
 
     loop {
@@ -40,14 +48,16 @@ pub async fn start_core_task(
 
 fn initialize_world(
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_message_receiver: tokio::sync::mpsc::Receiver<CommunicationPipes>,
+    communication_incoming_message_receiver: SerpeDialectReceiver,
+    communication_outgoing_message_sender: SerpeDialectSender,
 ) -> World {
     let mut world = World::default();
 
     initialize_resources(
         &mut world,
         diagnostic_message_receiver,
-        communication_message_receiver,
+        communication_incoming_message_receiver,
+        communication_outgoing_message_sender,
     );
 
     world
@@ -64,7 +74,8 @@ fn create_schedule() -> Schedule {
 fn initialize_resources(
     world: &mut World,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_message_receiver: tokio::sync::mpsc::Receiver<CommunicationPipes>,
+    communication_incoming_message_receiver: SerpeDialectReceiver,
+    communication_outgoing_message_sender: SerpeDialectSender,
 ) {
     world.insert_resource(domain::GenericResource {
         state: Default::default(),
@@ -76,7 +87,8 @@ fn initialize_resources(
     ));
 
     world.insert_resource(communication::CommunicationResource::new(
-        communication_message_receiver,
+        communication_incoming_message_receiver,
+        communication_outgoing_message_sender,
     ));
 }
 
