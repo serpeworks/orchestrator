@@ -17,6 +17,7 @@ impl DiagnosticFixture {
         world.insert_resource(DiagnosticResource { receiver });
 
         world.insert_resource(GenericResource {
+            version: "0.0.1".to_string(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
         });

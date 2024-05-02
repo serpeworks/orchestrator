@@ -1,9 +1,11 @@
 use bevy_ecs::prelude::*;
 
-use crate::core::{communication::system_communication, diagnostic::system_diagnostic};
+use crate::core::diagnostic::system_diagnostic;
 
 use self::{
-    communication::{SerpeDialectReceiver, SerpeDialectSender},
+    communication::{
+        system_communication_general, system_communication_receive_messages, CommsMessageReceiver,
+    },
     diagnostic::messages::DiagnosticMessageReceiver,
 };
 
@@ -14,18 +16,18 @@ pub mod domain;
 const PERIOD: u64 = 10;
 
 pub async fn start_core_task(
-    token: tokio_util::sync::CancellationToken,
+    config: &crate::config::Configuration,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_incoming_message_receiver: SerpeDialectReceiver,
-    communication_outgoing_message_sender: SerpeDialectSender,
+    communication_incoming_message_receiver: CommsMessageReceiver,
+    token: tokio_util::sync::CancellationToken,
 ) -> Result<(), ()> {
     // Create state and systems
     tracing::info!("Core Loop starting...");
 
     let mut world = initialize_world(
+        config,
         diagnostic_message_receiver,
         communication_incoming_message_receiver,
-        communication_outgoing_message_sender,
     );
     let mut schedule = create_schedule();
 
@@ -47,9 +49,9 @@ pub async fn start_core_task(
 }
 
 fn initialize_world(
+    config: &crate::config::Configuration,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_incoming_message_receiver: SerpeDialectReceiver,
-    communication_outgoing_message_sender: SerpeDialectSender,
+    communication_incoming_message_receiver: CommsMessageReceiver,
 ) -> World {
     let mut world = World::default();
 
@@ -57,7 +59,7 @@ fn initialize_world(
         &mut world,
         diagnostic_message_receiver,
         communication_incoming_message_receiver,
-        communication_outgoing_message_sender,
+        config,
     );
 
     world
@@ -66,7 +68,14 @@ fn initialize_world(
 fn create_schedule() -> Schedule {
     let mut schedule = Schedule::default();
 
-    schedule.add_systems((system_diagnostic, system_communication).chain());
+    schedule.add_systems(
+        (
+            system_diagnostic,
+            system_communication_general,
+            system_communication_receive_messages,
+        )
+            .chain(),
+    );
 
     schedule
 }
@@ -74,10 +83,11 @@ fn create_schedule() -> Schedule {
 fn initialize_resources(
     world: &mut World,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
-    communication_incoming_message_receiver: SerpeDialectReceiver,
-    communication_outgoing_message_sender: SerpeDialectSender,
+    communication_incoming_message_receiver: CommsMessageReceiver,
+    config: &crate::config::Configuration,
 ) {
     world.insert_resource(domain::GenericResource {
+        version: config.version.clone(),
         state: Default::default(),
         start_time: std::time::Instant::now(),
     });
@@ -88,7 +98,6 @@ fn initialize_resources(
 
     world.insert_resource(communication::CommunicationResource::new(
         communication_incoming_message_receiver,
-        communication_outgoing_message_sender,
     ));
 }
 

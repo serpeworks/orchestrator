@@ -48,6 +48,7 @@ fn diagnostic_system_session_list_empty_default() {
 #[test]
 fn on_server_information_check_state_returned() {
     let mut resource = GenericResource {
+        version: "0.0.1".to_string(),
         state: OrchestratorState::Booting,
         start_time: std::time::Instant::now(),
     };

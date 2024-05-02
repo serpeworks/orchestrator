@@ -1,14 +1,14 @@
 use bevy_ecs::{schedule::Schedule, world::World};
 
 use crate::core::communication::{
-    system_communication, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
+    system_communication_general, system_communication_receive_messages, CommsMessage,
+    CommsMessageSender, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
 };
 
 pub struct CommunicationFixture {
     pub world: World,
     pub schedule: Schedule,
-    pub incoming_sender: SerpeDialectSender,
-    pub outgoing_receiver: SerpeDialectReceiver,
+    pub sender: CommsMessageSender,
 }
 
 const COMMUNICATION_CHANNEL_SIZE: usize = 256;
@@ -17,23 +17,19 @@ impl CommunicationFixture {
     pub fn new() -> Self {
         let mut world = World::default();
 
-        let (outgoing_sender, outgoing_receiver) =
-            tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
-        let (incoming_sender, incoming_receiver) =
-            tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
-        world.insert_resource(CommunicationResource::new(
-            incoming_receiver,
-            outgoing_sender,
-        ));
+        let (sender, receiver) = tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
+        world.insert_resource(CommunicationResource::new(receiver));
 
         let mut schedule = Schedule::default();
-        schedule.add_systems(system_communication);
+        schedule.add_systems((
+            system_communication_general,
+            system_communication_receive_messages,
+        ));
 
         CommunicationFixture {
             world,
             schedule,
-            incoming_sender,
-            outgoing_receiver,
+            sender,
         }
     }
 
@@ -41,5 +37,20 @@ impl CommunicationFixture {
         self.schedule.run(&mut self.world)
     }
 
-    pub fn connect_session(&mut self) {}
+    pub fn connect_session(&mut self, agent_id: u32) -> (SerpeDialectSender, SerpeDialectReceiver) {
+        let (incoming_sender, incoming_receiver) =
+            tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
+        let (outgoing_sender, outgoing_receiver) =
+            tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
+
+        self.sender
+            .try_send(CommsMessage::Register {
+                agent_id,
+                receiver: incoming_receiver,
+                sender: outgoing_sender,
+            })
+            .unwrap();
+
+        return (incoming_sender, outgoing_receiver);
+    }
 }

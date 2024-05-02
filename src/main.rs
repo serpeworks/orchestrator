@@ -1,3 +1,5 @@
+#![deny(bad_style, while_true)]
+
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 
@@ -7,6 +9,8 @@ mod io;
 mod mavlink {
     include!(concat!(env!("OUT_DIR"), "/mavlink/mod.rs"));
 }
+
+mod config;
 
 pub use mavlink::dialects;
 
@@ -42,23 +46,28 @@ const COMMUNICATION_CHANNEL_SIZE: usize = 256;
 #[tokio::main]
 async fn main() {
     setup_tracing();
+    let config = config::load_config().expect("Failed to load configuration");
+    tracing::info!("Configuration loaded: {:?}", config);
 
     let token = tokio_util::sync::CancellationToken::new();
     setup_signal_handlers(token.clone()).await;
 
     let (diagnostic_tx, diagnostic_rx) = tokio::sync::mpsc::channel(DIAGNOSTIC_CHANNEL_SIZE);
-    let (communication_outgoing_tx, _communication_outgoing_rx) =
-        tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
     let (communication_incoming_tx, communication_incoming_rx) =
         tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
 
     let _ = tokio::join!(
         core::start_core_task(
-            token.clone(),
+            &config,
             diagnostic_rx,
             communication_incoming_rx,
-            communication_outgoing_tx,
+            token.clone()
         ),
-        io::start_io_task(token.clone(), diagnostic_tx, communication_incoming_tx,)
+        io::start_io_task(
+            diagnostic_tx,
+            communication_incoming_tx,
+            &config,
+            token.clone(),
+        )
     );
 }

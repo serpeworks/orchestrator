@@ -34,7 +34,9 @@ impl AppState {
             Err(_) => return Err(RequestError::GenericError),
         }
 
-        let response = rx.await.unwrap();
-        Ok(response)
+        return match rx.await {
+            Ok(response) => Ok(response),
+            Err(_) => Err(RequestError::GenericError),
+        };
     }
 }

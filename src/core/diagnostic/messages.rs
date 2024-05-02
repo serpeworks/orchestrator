@@ -1,11 +1,21 @@
 use tokio::sync::{mpsc, oneshot};
 
-use crate::core::domain::OrchestratorState;
+use crate::core::{
+    communication::{ConnectionStatus, SystemID},
+    domain::{OrchestratorState, SessionID, SessionStatus},
+};
 
 #[derive(Debug)]
 pub enum DiagnosticRequest {
     ServerInformation,
     SessionCollection,
+}
+
+pub struct SessionRepresentation {
+    pub session_id: SessionID,
+    pub system_id: SystemID,
+    pub session_status: SessionStatus,
+    pub connection_status: ConnectionStatus,
 }
 
 pub enum DiagnosticResponse {
@@ -15,7 +25,7 @@ pub enum DiagnosticResponse {
         uptime: f64,
     },
     SessionCollection {
-        sessions: Vec<u64>,
+        sessions: Vec<SessionRepresentation>,
     },
 }
 

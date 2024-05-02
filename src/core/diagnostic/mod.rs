@@ -6,7 +6,10 @@ use self::{
     messages::DiagnosticRequest,
 };
 
-use super::domain::{GenericResource, Session};
+use super::{
+    communication::SessionConnection,
+    domain::{GenericResource, SessionInformation},
+};
 
 mod handlers;
 pub mod messages;
@@ -28,7 +31,7 @@ impl DiagnosticResource {
 pub fn system_diagnostic(
     mut diagnostic_resource: ResMut<DiagnosticResource>,
     resource: Res<GenericResource>,
-    sessions: Query<&Session>,
+    sessions: Query<(&SessionInformation, &SessionConnection)>,
 ) {
     let _ = diagnostic_resource
         .receiver
@@ -42,7 +45,7 @@ pub fn system_diagnostic(
 
 fn process_request(
     request: &DiagnosticRequest,
-    sessions: Query<&Session>,
+    sessions: Query<(&SessionInformation, &SessionConnection)>,
     generic_resource: &GenericResource,
 ) -> DiagnosticResponse {
     match request {

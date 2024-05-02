@@ -2,14 +2,20 @@ use std::fmt;
 
 use serde::Serialize;
 
-use crate::core::{diagnostic::messages::DiagnosticResponse, domain::OrchestratorState};
+use crate::core::{
+    communication::ConnectionStatus,
+    diagnostic::messages::DiagnosticResponse,
+    domain::{OrchestratorState, SessionStatus},
+};
 
 use super::state::RequestError;
 
 #[derive(Serialize)]
 pub struct SessionDetailsDTO {
-    pub session_id: u64,
-    pub session_state: String,
+    pub system_id: u8,
+    pub session_id: u32,
+    pub session_status: String,
+    pub connection_status: String,
 }
 
 #[derive(Serialize)]
@@ -48,9 +54,11 @@ impl ToDTO for DiagnosticResponse {
             Self::SessionCollection { sessions } => {
                 let sessions = sessions
                     .iter()
-                    .map(|session_id| SessionDetailsDTO {
-                        session_id: *session_id,
-                        session_state: "TODO".to_string(),
+                    .map(|session_representation| SessionDetailsDTO {
+                        system_id: session_representation.system_id,
+                        session_id: session_representation.session_id,
+                        session_status: session_representation.session_status.to_string(),
+                        connection_status: session_representation.connection_status.to_string(),
                     })
                     .collect();
                 DTOs::SessionCollection { sessions }
@@ -65,6 +73,23 @@ impl fmt::Display for OrchestratorState {
             Self::Booting => write!(f, "BOOTING"),
             Self::Running => write!(f, "RUNNING"),
             Self::Stopping => write!(f, "STOPPING"),
+        }
+    }
+}
+
+impl fmt::Display for SessionStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Idle => write!(f, "IDLE"),
+        }
+    }
+}
+
+impl fmt::Display for ConnectionStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Connected => write!(f, "CONNECTED"),
+            Self::Disconnected => write!(f, "DISCONNECTED"),
         }
     }
 }

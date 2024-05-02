@@ -25,11 +25,13 @@ tracing-subscriber = "0.3.17"
 console-subscriber = "0.2.0"
 
 axum = "0.6.20"
-serde = "1.0.190"
+serde = { version = "1.0.190", features = ["derive"]}
 mavspec = { version = "0.3.3", features = ["specs", "rust"] }
 mavio = { version = "0.2.5", features = ["async"]}
+tower = { version = "0.4.13", features = ["full"] }
+config = { version = "0.14.0", features = ["yaml"] }
+tracing-test = "0.2.4"
 
 [build-dependencies]
-mavspec = { version = "0.3.3", features = ["generators", "rust_gen"] }
-
+mavspec = { version = "0.3.3", features = ["fingerprints", "generators", "rust_gen"] }
 
