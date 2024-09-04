@@ -9,7 +9,7 @@ use crate::core::diagnostic::messages::{
 #[derive(Debug)]
 pub enum RequestError {
     GenericError,
-    _TooManyRequests,
+    TooManyRequests,
 }
 
 pub type AppStateWrapper = State<Arc<AppState>>;
@@ -31,7 +31,14 @@ impl AppState {
         let msg = DiagnosticMessage(tx, request);
         match self.tx.try_send(msg) {
             Ok(_) => {}
-            Err(_) => return Err(RequestError::GenericError),
+            Err(send_error) => match send_error {
+                tokio::sync::mpsc::error::TrySendError::Full(_) => {
+                    return Err(RequestError::TooManyRequests)
+                }
+                tokio::sync::mpsc::error::TrySendError::Closed(_) => {
+                    return Err(RequestError::GenericError);
+                }
+            },
         }
 
         return match rx.await {

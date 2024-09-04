@@ -6,6 +6,7 @@ use super::communication::SessionConnection;
 
 pub type AgentID = u32;
 pub type SessionID = u32;
+pub type SystemID = u8;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OrchestratorState {
@@ -23,8 +24,8 @@ pub enum SessionStatus {
 
 #[derive(Component, Default)]
 pub struct SessionInformation {
-    pub session_id: SessionID,
     pub agent_id: AgentID,
+    pub session_id: SessionID,
     pub session_status: SessionStatus,
 }
 
@@ -36,7 +37,6 @@ pub struct SessionBundle {
 
 #[derive(Resource)]
 pub struct GenericResource {
-    pub version: String,
     pub state: OrchestratorState,
     pub start_time: Instant,
 }

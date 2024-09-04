@@ -1,7 +1,10 @@
 use bevy_ecs::{schedule::Schedule, world::World};
 use tokio::sync::mpsc;
 
-use super::{messages::DiagnosticMessage, system_diagnostic, DiagnosticResource, GenericResource};
+use super::{
+    messages::DiagnosticMessage, system_diagnostic, DiagnosticResource, GenericResource,
+    TickrateResource,
+};
 
 pub struct DiagnosticFixture {
     world: World,
@@ -15,9 +18,9 @@ impl DiagnosticFixture {
 
         let (tx, receiver) = mpsc::channel(1);
         world.insert_resource(DiagnosticResource { receiver });
+        world.insert_resource(TickrateResource::new(200));
 
         world.insert_resource(GenericResource {
-            version: "0.0.1".to_string(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
         });

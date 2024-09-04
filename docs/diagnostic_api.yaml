@@ -14,12 +14,62 @@ paths:
             application/json:
               schema:
                   $ref: "#/components/schemas/ServerStatus"
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /sessions:
     get:
       summary: List with session details
       responses:
         '200':
-          description: Session List
+          description: Successful fetch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionList"
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /environment:
+    get:
+      summary: Fetch environment details
+      responses:
+        '200':
+          description: Successful fetch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
 components:
   schemas:
     ServerStatus:
@@ -27,11 +77,54 @@ components:
       properties:
         state:
           type: string
-          enum: [BOOTING, RUNNING, STOPPING]
+          enum:
+            - BOOTING
+            - RUNNING
+            - STOPPING
         uptime:
           type: number 
+        tickrate:
+          type: number
         version:
           type: string
           example: "0.1.5"
-
+    SessionList:
+      type: array
+    SessionRepresentation:
+      agent_id:
+        type: number
+      system_id:
+        type: number
+      session_id:
+        type: number
+      session_status:
+        type: string
+        enum:
+          - IDLE
+      connection_status:
+        type: string
+        enum:
+          - CONNECTED
+    SessionState:
+      type: string
+      enum:
+        - IDLE
+        - EMERGENCY
+    MissionState:
+      type: object
+      properties:
+        mission_id:
+          type: integer
+    Environment:
+      type: object
+      properties:
+        temp:
+          type: string
+    Problem:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
 

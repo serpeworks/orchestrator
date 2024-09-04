@@ -1,0 +1,14 @@
+core:
+  max_number_of_drones: 100
+  maximum_tickrate: 100
+  tickrate_calculation_period_ms: 250
+communication:
+  port: 8000
+diagnostic:
+  enabled: true 
+  port: 8080
+  host: localhost
+  use_permissive_cors: true
+  concurrent_requests: 64
+  buffer_size: 256
+  rate_limit: 256

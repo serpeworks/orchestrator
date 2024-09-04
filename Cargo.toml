@@ -1,6 +1,6 @@
 [package]
 name = "drones"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 build = "build/build.rs"
@@ -27,11 +27,11 @@ console-subscriber = "0.2.0"
 axum = "0.6.20"
 serde = { version = "1.0.190", features = ["derive"]}
 mavspec = { version = "0.3.3", features = ["specs", "rust"] }
-mavio = { version = "0.2.5", features = ["async"]}
+mavio = { version = "0.2.6", features = ["async"]}
 tower = { version = "0.4.13", features = ["full"] }
 config = { version = "0.14.0", features = ["yaml"] }
 tracing-test = "0.2.4"
 
 [build-dependencies]
-mavspec = { version = "0.3.3", features = ["fingerprints", "generators", "rust_gen"] }
+mavspec = { version = "0.3.4", features = ["fingerprints", "generators", "rust_gen"] }
 

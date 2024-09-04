@@ -9,10 +9,16 @@ use crate::core::{
 };
 
 use super::state::RequestError;
+#[derive(Serialize)]
+pub struct Coordinates {
+    pub long: f32,
+    pub lat: f32,
+}
 
 #[derive(Serialize)]
 pub struct SessionDetailsDTO {
     pub system_id: u8,
+    pub agent_id: u32,
     pub session_id: u32,
     pub session_status: String,
     pub connection_status: String,
@@ -23,8 +29,9 @@ pub struct SessionDetailsDTO {
 pub enum DTOs {
     ServerInformation {
         state: String,
-        version: String,
         uptime: f64,
+        tickrate: f64,
+        version: String,
     },
     SessionCollection {
         sessions: Vec<SessionDetailsDTO>,
@@ -46,15 +53,18 @@ impl ToDTO for DiagnosticResponse {
                 state,
                 version,
                 uptime,
+                tickrate,
             } => DTOs::ServerInformation {
                 state: state.to_string(),
                 version: version.clone(),
                 uptime: *uptime,
+                tickrate: *tickrate,
             },
             Self::SessionCollection { sessions } => {
                 let sessions = sessions
                     .iter()
                     .map(|session_representation| SessionDetailsDTO {
+                        agent_id: session_representation.agent_id,
                         system_id: session_representation.system_id,
                         session_id: session_representation.session_id,
                         session_status: session_representation.session_status.to_string(),
@@ -101,7 +111,7 @@ impl ToDTO for RequestError {
                 title: "Generic Error".to_string(),
                 status: 500,
             },
-            Self::_TooManyRequests => DTOs::Error {
+            Self::TooManyRequests => DTOs::Error {
                 title: "Too Many Requests".to_string(),
                 status: 429,
             },

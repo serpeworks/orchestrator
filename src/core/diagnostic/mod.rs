@@ -8,7 +8,7 @@ use self::{
 
 use super::{
     communication::SessionConnection,
-    domain::{GenericResource, SessionInformation},
+    domain::{GenericResource, SessionInformation}, misc::tickrate::TickrateResource,
 };
 
 mod handlers;
@@ -31,6 +31,7 @@ impl DiagnosticResource {
 pub fn system_diagnostic(
     mut diagnostic_resource: ResMut<DiagnosticResource>,
     resource: Res<GenericResource>,
+    tickrate: Res<TickrateResource>,
     sessions: Query<(&SessionInformation, &SessionConnection)>,
 ) {
     let _ = diagnostic_resource
@@ -38,7 +39,7 @@ pub fn system_diagnostic(
         .try_recv()
         .ok()
         .map(|DiagnosticMessage(tx, request)| {
-            let response = process_request(&request, sessions, &resource);
+            let response = process_request(&request, sessions, &resource, tickrate.latest_tickrate);
             let _ = tx.send(response);
         });
 }
@@ -47,9 +48,10 @@ fn process_request(
     request: &DiagnosticRequest,
     sessions: Query<(&SessionInformation, &SessionConnection)>,
     generic_resource: &GenericResource,
+    tickrate: f64,
 ) -> DiagnosticResponse {
     match request {
-        DiagnosticRequest::ServerInformation => on_server_information(generic_resource),
+        DiagnosticRequest::ServerInformation => on_server_information(generic_resource, tickrate),
         DiagnosticRequest::SessionCollection => on_session_collection(sessions),
     }
 }

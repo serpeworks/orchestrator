@@ -20,12 +20,12 @@ pub async fn start_io_task(
     let _ = tokio::join!(
         run_diagnostic_server(
             diagnostic_message_sender,
-            config.diagnostic_port,
-            token.clone()
+            config.diagnostic.clone(),
+            token.clone(),
         ),
         run_communication_server(
             communication_message_sender,
-            config.communication_port,
+            config.communication.port,
             token.clone()
         )
     );

@@ -1,13 +1,36 @@
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
 
-const CONFIG_FILEPATH: &str = "configs/default.yaml";
+const CONFIG_FILEPATH: &str = "configs/config.yaml";
+
+#[derive(Copy, Clone, Debug, Deserialize)]
+pub struct CoreConfiguration {
+    pub max_number_of_drones: usize,
+    pub maximum_tickrate: f64,
+    pub tickrate_calculation_period_ms: u64,
+}
+
+#[derive(Copy, Clone, Debug, Deserialize)]
+pub struct CommunicationConfiguration {
+    pub port: u16,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct DiagnosticConfiguration {
+    pub enabled: bool,
+    pub port: u16,
+    pub host: String,
+    pub use_permissive_cors: bool,
+    pub concurrent_requests: usize,
+    pub buffer_size: usize,
+    pub rate_limit: u64,
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Configuration {
-    pub version: String,
-    pub diagnostic_port: u16,
-    pub communication_port: u16,
+    pub core: CoreConfiguration,
+    pub diagnostic: DiagnosticConfiguration,
+    pub communication: CommunicationConfiguration,
 }
 
 pub fn load_config() -> Result<Configuration, ConfigError> {

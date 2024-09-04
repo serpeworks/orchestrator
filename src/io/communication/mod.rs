@@ -12,7 +12,8 @@ use crate::{
     dialects::SerpeDialect,
 };
 
-const GCS_SYSTEM_ID: u8 = 1;
+const GCS_SYSTEM_ID: u8 = 0;
+const CONNECTION_CHANNEL_BUFFER_SIZE: usize = 256;
 
 pub async fn run_communication_server(
     communication_message_sender: CommsMessageSender,
@@ -59,10 +60,18 @@ async fn handle_connection(
     let mut receiver = AsyncReceiver::versioned(reader, V2);
     let sender = AsyncSender::versioned(writer, V2);
 
-    let agent_id = check_registration(&mut receiver).await.unwrap();
+    let result = check_registration(&mut receiver).await;
+    if result.is_err() {
+        tracing::warn!("Attempted Connection Fail: First message on stream is not registration!");
+        return;
+    }
 
-    let (incoming_sender, incoming_receiver) = tokio::sync::mpsc::channel(256);
-    let (outgoing_sender, outgoing_receiver) = tokio::sync::mpsc::channel(256);
+    let agent_id = result.unwrap();
+
+    let (incoming_sender, incoming_receiver) =
+        tokio::sync::mpsc::channel(CONNECTION_CHANNEL_BUFFER_SIZE);
+    let (outgoing_sender, outgoing_receiver) =
+        tokio::sync::mpsc::channel(CONNECTION_CHANNEL_BUFFER_SIZE);
 
     send_channel_endpoints(
         agent_id,
@@ -79,9 +88,13 @@ async fn handle_connection(
 }
 
 async fn check_registration(receiver: &mut AsyncReceiver<OwnedReadHalf, V2>) -> Result<u32, ()> {
-    let frame = receiver.recv().await.unwrap();
+    let result = receiver.recv().await;
 
-    let message = frame.decode::<SerpeDialect>().unwrap();
+    if result.is_err() {
+        return Err(());
+    }
+
+    let message = result.unwrap().decode::<SerpeDialect>().unwrap();
     if let SerpeDialect::Register(msg) = message {
         Ok(msg.agent_id)
     } else {
@@ -107,12 +120,27 @@ async fn send_channel_endpoints(
 
 async fn listen(
     mut receiver: AsyncReceiver<OwnedReadHalf, V2>,
-    _incoming_sender: SerpeDialectSender,
+    incoming_sender: SerpeDialectSender,
 ) -> mavio::error::Result<()> {
     loop {
         let frame_result = receiver.recv().await;
+
+        if let Err(err) = frame_result {
+            match err {
+                mavio::error::Error::Io(_error) => {
+                    tracing::info!("Connection closed by client.");
+                    return Ok(());
+                }
+                _ => {
+                    tracing::error!("Error receiving frame: {:?}", err);
+                }
+            }
+            tracing::error!("Error receiving frame: {:?}", err);
+            return Err(err)?;
+        }
+
         if frame_result.is_err() {
-            let err = frame_result.err().unwrap();
+            let err = frame_result.unwrap_err();
             match err {
                 // TODO: set this to respond on UnexpectedEof
                 mavio::error::Error::Io(_error) => {
@@ -134,7 +162,17 @@ async fn listen(
             continue;
         }
 
-        // TODO: send to incoming_sender
+        match frame.decode::<SerpeDialect>() {
+            Ok(msg) => {
+                if let Err(err) = incoming_sender.send(msg).await {
+                    tracing::error!("Could not send message internally: {:?}", err);
+                }
+            }
+            Err(_) => {
+                tracing::error!("Error decoding frame.");
+                continue;
+            }
+        }
     }
 }
 
@@ -148,9 +186,15 @@ async fn write(
         match outgoing_receiver.recv().await {
             Some(msg) => {
                 tracing::info!("Received message to send.");
+
+                // create frame and filter some messages
                 let frame = match msg {
-                    SerpeDialect::UnregisterAck(msg) => endpoint.next_frame(&msg).unwrap(),
                     SerpeDialect::RegisterAck(msg) => endpoint.next_frame(&msg).unwrap(),
+                    SerpeDialect::UnregisterAck(msg) => endpoint.next_frame(&msg).unwrap(),
+                    SerpeDialect::HeartbeatAck(msg) => endpoint.next_frame(&msg).unwrap(),
+                    SerpeDialect::MissionRequest(msg) => endpoint.next_frame(&msg).unwrap(),
+                    SerpeDialect::MissionAcceptAck(msg) => endpoint.next_frame(&msg).unwrap(),
+                    SerpeDialect::MissionFinishedAck(msg) => endpoint.next_frame(&msg).unwrap(),
                     _ => {
                         continue;
                     }

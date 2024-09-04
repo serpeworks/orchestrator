@@ -1,8 +1,8 @@
 use tokio::sync::{mpsc, oneshot};
 
 use crate::core::{
-    communication::{ConnectionStatus, SystemID},
-    domain::{OrchestratorState, SessionID, SessionStatus},
+    communication::ConnectionStatus,
+    domain::{AgentID, OrchestratorState, SessionID, SessionStatus, SystemID},
 };
 
 #[derive(Debug)]
@@ -11,11 +11,16 @@ pub enum DiagnosticRequest {
     SessionCollection,
 }
 
+pub struct MissionRepresentation {
+}
+
 pub struct SessionRepresentation {
+    pub agent_id: AgentID,
     pub session_id: SessionID,
     pub system_id: SystemID,
     pub session_status: SessionStatus,
     pub connection_status: ConnectionStatus,
+    pub mission: Option<MissionRepresentation>,
 }
 
 pub enum DiagnosticResponse {
@@ -23,6 +28,7 @@ pub enum DiagnosticResponse {
         state: OrchestratorState,
         version: String,
         uptime: f64,
+        tickrate: f64,
     },
     SessionCollection {
         sessions: Vec<SessionRepresentation>,

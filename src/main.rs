@@ -57,17 +57,17 @@ async fn main() {
         tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
 
     let _ = tokio::join!(
+        io::start_io_task(
+            diagnostic_tx,
+            communication_incoming_tx,
+            &config,
+            token.clone(),
+        ),
         core::start_core_task(
             &config,
             diagnostic_rx,
             communication_incoming_rx,
             token.clone()
         ),
-        io::start_io_task(
-            diagnostic_tx,
-            communication_incoming_tx,
-            &config,
-            token.clone(),
-        )
     );
 }

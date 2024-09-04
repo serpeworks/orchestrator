@@ -13,38 +13,49 @@ use tower::{
 };
 
 use crate::{
-    core::diagnostic::messages::DiagnosticMessageSender, io::diagnostic::handlers::create_router,
+    config::DiagnosticConfiguration, core::diagnostic::messages::DiagnosticMessageSender,
+    io::diagnostic::handlers::create_router,
 };
 
 use self::state::AppState;
 
 pub async fn run_diagnostic_server(
     tx: DiagnosticMessageSender,
-    port: u16,
+    config: DiagnosticConfiguration,
     token: CancellationToken,
 ) {
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    if !config.enabled {
+        return;
+    }
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
     let state = AppState::new(tx);
 
-    let app = create_router(state).layer(
+    let app = create_router(state, &config).layer(
         ServiceBuilder::new()
             .layer(HandleErrorLayer::new(|err: BoxError| async move {
                 tracing::error!("Error frm Service Builder Layer");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
+                ( StatusCode::INTERNAL_SERVER_ERROR,
                     format!("Unhandled error: {}", err),
                 )
             }))
-            .layer(ConcurrencyLimitLayer::new(256))
-            .layer(BufferLayer::new(256))
-            .layer(RateLimitLayer::new(256, Duration::from_secs(1))),
+            .layer(ConcurrencyLimitLayer::new(config.concurrent_requests))
+            .layer(BufferLayer::new(config.buffer_size))
+            .layer(RateLimitLayer::new(
+                config.rate_limit,
+                Duration::from_secs(1),
+            )),
     );
 
     let server_task = axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(token.cancelled());
 
-    tracing::info!("Diagnostic listening at http://localhost:{}", port);
+    tracing::info!(
+        "Diagnostic listening at http://{}:{}",
+        config.host,
+        config.port
+    );
 
     let _ = server_task.await;
 }

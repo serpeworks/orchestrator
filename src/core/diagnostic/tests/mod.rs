@@ -48,12 +48,12 @@ fn diagnostic_system_session_list_empty_default() {
 #[test]
 fn on_server_information_check_state_returned() {
     let mut resource = GenericResource {
-        version: "0.0.1".to_string(),
         state: OrchestratorState::Booting,
         start_time: std::time::Instant::now(),
     };
+    let tickrate = 0.0;
 
-    let response = on_server_information(&resource);
+    let response = on_server_information(&resource, tickrate);
     match response {
         DiagnosticResponse::ServerInformation { state, .. } => {
             assert_eq!(state, OrchestratorState::Booting);
@@ -62,7 +62,7 @@ fn on_server_information_check_state_returned() {
     }
 
     resource.state = OrchestratorState::Running;
-    let response = on_server_information(&resource);
+    let response = on_server_information(&resource, tickrate);
     match response {
         DiagnosticResponse::ServerInformation { state, .. } => {
             assert_eq!(state, OrchestratorState::Running);
@@ -71,7 +71,7 @@ fn on_server_information_check_state_returned() {
     }
 
     resource.state = OrchestratorState::Stopping;
-    let response = on_server_information(&resource);
+    let response = on_server_information(&resource, tickrate);
     match response {
         DiagnosticResponse::ServerInformation { state, .. } => {
             assert_eq!(state, OrchestratorState::Stopping);

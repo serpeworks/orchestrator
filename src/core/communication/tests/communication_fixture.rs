@@ -1,9 +1,9 @@
 use bevy_ecs::{schedule::Schedule, world::World};
 
-use crate::core::communication::{
+use crate::core::{communication::{
     system_communication_general, system_communication_receive_messages, CommsMessage,
     CommsMessageSender, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
-};
+}, misc::system_id_table::SystemIdTable};
 
 pub struct CommunicationFixture {
     pub world: World,
@@ -19,6 +19,7 @@ impl CommunicationFixture {
 
         let (sender, receiver) = tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
         world.insert_resource(CommunicationResource::new(receiver));
+        world.insert_resource(SystemIdTable::new());
 
         let mut schedule = Schedule::default();
         schedule.add_systems((
