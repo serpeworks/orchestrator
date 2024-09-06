@@ -6,7 +6,7 @@ use crate::core::{
         CommsMessageSender, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
     },
     geo::Coordinates,
-    misc::system_id_table::SystemIdTable,
+    misc::{resource::ConfigurationResource, system_id_table::SystemIdTable},
 };
 
 pub struct CommunicationFixture {
@@ -24,7 +24,16 @@ impl CommunicationFixture {
         let (sender, receiver) = tokio::sync::mpsc::channel(COMMUNICATION_CHANNEL_SIZE);
         world.insert_resource(CommunicationResource::new(receiver));
         world.insert_resource(SystemIdTable::new());
-
+        world.insert_resource(ConfigurationResource::new(
+            crate::config::CoreConfiguration {
+                max_number_of_drones: 100,
+                maximum_tickrate: 100.0,
+                tickrate_calculation_period_ms: 10,
+                perimeter_filepath: "".to_string(),
+                cell_size: 0.0005,
+            },
+        ));
+        
         let mut schedule = Schedule::default();
         schedule.add_systems((
             system_communication_general,

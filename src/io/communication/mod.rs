@@ -157,7 +157,6 @@ async fn listen(
         if frame_result.is_err() {
             let err = frame_result.unwrap_err();
             match err {
-                // TODO: set this to respond on UnexpectedEof
                 mavio::error::Error::Io(_error) => {
                     tracing::info!("Connection closed by client.");
                     return Ok(());
