@@ -52,7 +52,6 @@ pub fn system_example_chelas_monitor(
             target.longitude,
         );
 
-        // TODO: add waypoints
         let waypoints = generate_waypoints(current_coordinates, target, 16);
 
         mission_handler.request_mission(entity, target, waypoints);
