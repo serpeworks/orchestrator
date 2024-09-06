@@ -96,30 +96,27 @@ pub fn system_mission_proposal_handler(
         waypoints,
     } in mission_handler.mission_proposals.iter()
     {
-        match drones_query.get_mut(*entity) {
-            Ok((mut message_sender, mission_opt)) => {
-                if mission_opt.is_some() {
-                    tracing::info!("Tried to assign mission to an agent that already has a mission")
-                }
-
-                message_sender.append(SerpeDialect::MissionRequest(MissionRequest {
-                    target_latitude: target.latitude as f32,
-                    target_longitude: target.longitude as f32,
-                    waypoint_count: 0,
-                    waypoint_latitudes: [0.0; 32],
-                    waypoint_longitudes: [0.0; 32],
-                }));
-
-                commands.entity(*entity).insert(Mission {
-                    mission_id: mission_id_counter.count,
-                    mission_state: MissionState::PROPOSED,
-                    waypoints: waypoints.clone(),
-                    target: *target,
-                });
-
-                mission_id_counter.count += 1;
+        if let Ok((mut message_sender, mission_opt)) = drones_query.get_mut(*entity) {
+            if mission_opt.is_some() {
+                tracing::info!("Tried to assign mission to an agent that already has a mission")
             }
-            Err(_) => {}
+
+            message_sender.append(SerpeDialect::MissionRequest(MissionRequest {
+                target_latitude: target.latitude as f32,
+                target_longitude: target.longitude as f32,
+                waypoint_count: 0,
+                waypoint_latitudes: [0.0; 32],
+                waypoint_longitudes: [0.0; 32],
+            }));
+
+            commands.entity(*entity).insert(Mission {
+                mission_id: mission_id_counter.count,
+                mission_state: MissionState::PROPOSED,
+                waypoints: waypoints.clone(),
+                target: *target,
+            });
+
+            mission_id_counter.count += 1;
         }
     }
     mission_handler.mission_proposals.clear();
