@@ -4,6 +4,7 @@ use crate::core::{
     communication::ConnectionStatus,
     domain::{AgentID, OrchestratorState, SessionID, SessionStatus, SystemID},
     geo::{Bounds, Coordinates},
+    mission::MissionID,
 };
 
 #[derive(Debug)]
@@ -13,7 +14,9 @@ pub enum DiagnosticRequest {
     SessionCollection,
 }
 
+#[derive(Clone)]
 pub struct MissionRepresentation {
+    pub mission_id: MissionID,
     pub active: bool,
     pub target: Coordinates,
     pub waypoints: Vec<Coordinates>,

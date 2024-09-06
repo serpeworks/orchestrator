@@ -79,7 +79,7 @@ pub fn system_communication_general(
                 sender,
                 coordinates,
             } => {
-                tracing::warn!("Received registration request from agent_id: {}", agent_id);
+                tracing::info!("Received registration request from agent_id: {}", agent_id);
                 if config_resource.config.max_number_of_drones <= id_table.count() {
                     tracing::warn!(
                         "Ignoring registration request from agent_id:{}, network is full",

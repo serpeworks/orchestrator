@@ -34,6 +34,7 @@ config = { version = "0.14.0", features = ["yaml"] }
 tracing-test = "0.2.4"
 kml = "0.8.5"
 geo = "0.28.0"
+rand = "0.8.5"
 
 [build-dependencies]
 mavspec = { version = "0.3.4", features = ["fingerprints", "generators", "rust_gen"] }

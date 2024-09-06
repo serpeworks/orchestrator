@@ -40,6 +40,7 @@ pub fn on_session_collection(
                     connection_status: connection.status,
                     coordinates: attitude.coordinates,
                     mission: mission_opt.map(|mission| MissionRepresentation {
+                        mission_id: mission.mission_id,
                         active: mission.mission_state == MissionState::ONGOING,
                         target: mission.target,
                         waypoints: mission.waypoints.clone(),

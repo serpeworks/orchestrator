@@ -19,6 +19,7 @@ pub struct CoordinatesDto {
 
 #[derive(Serialize)]
 pub struct MissionDto {
+    pub mission_id: u64,
     pub active: bool,
     pub target: CoordinatesDto,
     pub waypoints: Vec<CoordinatesDto>,
@@ -32,6 +33,7 @@ pub struct SessionDetailsDTO {
     pub session_status: String,
     pub coordinates: CoordinatesDto,
     pub connection_status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mission: Option<MissionDto>,
 }
 
@@ -91,7 +93,19 @@ impl ToDTO for DiagnosticResponse {
                         session_status: session_representation.session_status.to_string(),
                         coordinates: session_representation.coordinates.to_dto(),
                         connection_status: session_representation.connection_status.to_string(),
-                        mission: None, // TODO
+                        mission: session_representation
+                            .mission
+                            .clone()
+                            .map(|mission| MissionDto {
+                                mission_id: mission.mission_id,
+                                active: mission.active,
+                                target: mission.target.to_dto(),
+                                waypoints: mission
+                                    .waypoints
+                                    .iter()
+                                    .map(|coord| coord.to_dto())
+                                    .collect(),
+                            }),
                     })
                     .collect();
                 DTOs::SessionCollection {

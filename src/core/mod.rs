@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy_ecs::prelude::*;
 use communication::system_communication_send_messages;
+use example_module::system_example_chelas_monitor;
 use heartbeat::system_heartbeat;
 use kml::Kml;
 use misc::{
@@ -9,7 +10,7 @@ use misc::{
     system_id_table::SystemIdTable,
     tickrate::system_tickrate,
 };
-use mission::system_mission;
+use mission::{system_mission_handler, system_mission_proposal_handler};
 
 use crate::core::diagnostic::system_diagnostic;
 
@@ -23,6 +24,7 @@ use self::{
 pub mod communication;
 pub mod diagnostic;
 pub mod domain;
+pub mod example_module;
 pub mod geo;
 pub mod heartbeat;
 pub mod misc;
@@ -94,8 +96,10 @@ fn create_schedule() -> Schedule {
             system_communication_receive_messages,
             system_communication_send_messages,
             system_heartbeat,
-            system_mission,
+            system_mission_proposal_handler,
+            system_mission_handler,
             system_diagnostic,
+            system_example_chelas_monitor,
         )
             .chain(),
     );
@@ -133,6 +137,12 @@ fn initialize_resources(
     world.insert_resource(communication::CommunicationResource::new(
         communication_incoming_message_receiver,
     ));
+
+    world.insert_resource(mission::MissionHandler::new());
+    world.insert_resource(mission::MissionIDCounter::default());
+
+    // example module resource
+    world.insert_resource(example_module::MissionRequestTimer::default());
 }
 
 async fn sleep(maximum_tickrate: f64, ellapsed: std::time::Duration) {

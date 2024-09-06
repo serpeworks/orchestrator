@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Orchestrator Diagnostic API 
+  title: Orchestrator Diagnostic API
   description: Orchestrator HTTP API for diagnostic tools.
   version: 0.0.1
 paths:
@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: "#/components/schemas/ServerInformation"
+                $ref: "#/components/schemas/ServerInformation"
         '401':
           description: Unauthorized
           content:
@@ -83,6 +83,21 @@ components:
           type: number
           format: double
 
+    MissionDto:
+      type: object
+      properties:
+        mission_id:
+          type: integer
+          format: int64
+        active:
+          type: boolean
+        target:
+          $ref: "#/components/schemas/CoordinatesDto"
+        waypoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoordinatesDto"
+
     ServerInformation:
       type: object
       properties:
@@ -106,10 +121,13 @@ components:
       properties:
         system_id:
           type: integer
+          format: int32
         agent_id:
           type: integer
+          format: int32
         session_id:
           type: integer
+          format: int32
         session_status:
           type: string
           enum:
@@ -121,6 +139,11 @@ components:
           enum:
             - CONNECTED
             - DISCONNECTED
+        mission:
+          type: object
+          nullable: true
+          $ref: "#/components/schemas/MissionDto"
+
     SessionCollection:
       type: object
       properties:
@@ -149,6 +172,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BoundsDto"
+
     Problem:
       type: object
       properties:
@@ -156,3 +180,4 @@ components:
           type: string
         status:
           type: integer
+          format: int32

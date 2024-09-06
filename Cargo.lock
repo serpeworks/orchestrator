@@ -1494,6 +1494,7 @@ dependencies = [
  "log",
  "mavio",
  "mavspec",
+ "rand",
  "serde",
  "tokio",
  "tokio-util",

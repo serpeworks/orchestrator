@@ -18,6 +18,15 @@ pub struct Bounds {
     pub size_degrees: f64,
 }
 
+impl Bounds {
+    pub fn center(&self) -> Coordinates {
+        Coordinates {
+            latitude: self.north_west_corner.latitude - (self.size_degrees / 2.0),
+            longitude: self.north_west_corner.longitude + (self.size_degrees / 2.0),
+        }
+    }
+}
+
 #[derive(Resource)]
 pub struct EnvironmentResource {
     pub perimeter: Perimeter,
