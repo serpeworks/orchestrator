@@ -3,15 +3,20 @@ use tokio::sync::{mpsc, oneshot};
 use crate::core::{
     communication::ConnectionStatus,
     domain::{AgentID, OrchestratorState, SessionID, SessionStatus, SystemID},
+    geo::{Bounds, Coordinates},
 };
 
 #[derive(Debug)]
 pub enum DiagnosticRequest {
     ServerInformation,
+    Environment,
     SessionCollection,
 }
 
 pub struct MissionRepresentation {
+    pub active: bool,
+    pub target: Coordinates,
+    pub waypoints: Vec<Coordinates>,
 }
 
 pub struct SessionRepresentation {
@@ -20,6 +25,7 @@ pub struct SessionRepresentation {
     pub system_id: SystemID,
     pub session_status: SessionStatus,
     pub connection_status: ConnectionStatus,
+    pub coordinates: Coordinates,
     pub mission: Option<MissionRepresentation>,
 }
 
@@ -29,6 +35,10 @@ pub enum DiagnosticResponse {
         version: String,
         uptime: f64,
         tickrate: f64,
+    },
+    Environment {
+        perimeter: Vec<Coordinates>,
+        cells: Vec<Bounds>,
     },
     SessionCollection {
         sessions: Vec<SessionRepresentation>,

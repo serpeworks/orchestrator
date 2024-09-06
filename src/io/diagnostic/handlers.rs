@@ -27,7 +27,12 @@ pub async fn get_sessions(State(state): AppStateWrapper) -> Json<DTOs> {
     Json(res.to_dto())
 }
 
-pub async fn get_environment(State(_state): AppStateWrapper) {}
+pub async fn get_environment(State(state): AppStateWrapper) -> Json<DTOs> {
+    let request = DiagnosticRequest::Environment;
+    let res = state.send_request(request).await;
+
+    Json(res.to_dto())
+}
 
 pub fn create_router(state: AppState, config: &DiagnosticConfiguration) -> Router {
     let mut router = Router::new()
@@ -42,5 +47,5 @@ pub fn create_router(state: AppState, config: &DiagnosticConfiguration) -> Route
         panic!("Non-Permissive CORS is not implemented!");
     }
 
-    return router;
+    router
 }

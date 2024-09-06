@@ -19,7 +19,7 @@ fn diagnostic_system_server_status_default() {
     if let DiagnosticResponse::ServerInformation { state, .. } =
         rx.try_recv().expect("Expect message received")
     {
-        assert_eq!(state, OrchestratorState::Booting)
+        assert_eq!(state, OrchestratorState::Running)
     } else {
         panic!("Incorrect Response received");
     }
@@ -48,7 +48,7 @@ fn diagnostic_system_session_list_empty_default() {
 #[test]
 fn on_server_information_check_state_returned() {
     let mut resource = GenericResource {
-        state: OrchestratorState::Booting,
+        state: OrchestratorState::Running,
         start_time: std::time::Instant::now(),
     };
     let tickrate = 0.0;
@@ -56,7 +56,7 @@ fn on_server_information_check_state_returned() {
     let response = on_server_information(&resource, tickrate);
     match response {
         DiagnosticResponse::ServerInformation { state, .. } => {
-            assert_eq!(state, OrchestratorState::Booting);
+            assert_eq!(state, OrchestratorState::Running);
         }
         _ => panic!("Expected ServerInformation response"),
     }

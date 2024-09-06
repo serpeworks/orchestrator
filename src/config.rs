@@ -3,11 +3,13 @@ use serde::Deserialize;
 
 const CONFIG_FILEPATH: &str = "configs/config.yaml";
 
-#[derive(Copy, Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CoreConfiguration {
     pub max_number_of_drones: usize,
     pub maximum_tickrate: f64,
     pub tickrate_calculation_period_ms: u64,
+    pub perimeter_filepath: String,
+    pub cell_size: f64,
 }
 
 #[derive(Copy, Clone, Debug, Deserialize)]

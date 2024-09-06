@@ -1,11 +1,15 @@
 use std::time::Duration;
 
 use bevy_ecs::prelude::*;
+use communication::system_communication_send_messages;
+use heartbeat::system_heartbeat;
+use kml::Kml;
 use misc::{
     clock::{system_clock, Clock},
     system_id_table::SystemIdTable,
     tickrate::system_tickrate,
 };
+use mission::system_mission;
 
 use crate::core::diagnostic::system_diagnostic;
 
@@ -19,6 +23,7 @@ use self::{
 pub mod communication;
 pub mod diagnostic;
 pub mod domain;
+pub mod geo;
 pub mod heartbeat;
 pub mod misc;
 pub mod mission;
@@ -28,6 +33,7 @@ pub async fn start_core_task(
     diagnostic_message_receiver: DiagnosticMessageReceiver,
     communication_incoming_message_receiver: CommsMessageReceiver,
     token: tokio_util::sync::CancellationToken,
+    kml: Kml,
 ) -> Result<(), ()> {
     tracing::info!("Core Loop starting...");
 
@@ -35,6 +41,7 @@ pub async fn start_core_task(
         config,
         diagnostic_message_receiver,
         communication_incoming_message_receiver,
+        kml,
     );
 
     let mut schedule = create_schedule();
@@ -61,6 +68,7 @@ fn initialize_world(
     config: &crate::config::Configuration,
     diagnostic_message_receiver: DiagnosticMessageReceiver,
     communication_incoming_message_receiver: CommsMessageReceiver,
+    kml: Kml,
 ) -> World {
     let mut world = World::default();
 
@@ -69,6 +77,7 @@ fn initialize_world(
         diagnostic_message_receiver,
         communication_incoming_message_receiver,
         &config.core,
+        kml,
     );
 
     world
@@ -81,9 +90,12 @@ fn create_schedule() -> Schedule {
         (
             system_clock,
             system_tickrate,
-            system_diagnostic,
             system_communication_general,
             system_communication_receive_messages,
+            system_communication_send_messages,
+            system_heartbeat,
+            system_mission,
+            system_diagnostic,
         )
             .chain(),
     );
@@ -96,6 +108,7 @@ fn initialize_resources(
     diagnostic_message_receiver: DiagnosticMessageReceiver,
     communication_incoming_message_receiver: CommsMessageReceiver,
     config: &crate::config::CoreConfiguration,
+    kml: Kml,
 ) {
     let start_time = std::time::Instant::now();
 
@@ -103,6 +116,7 @@ fn initialize_resources(
     world.insert_resource(SystemIdTable::new());
 
     world.insert_resource(misc::resource::ConfigurationResource::new(config.clone()));
+    world.insert_resource(geo::EnvironmentResource::new(kml, config.cell_size));
 
     world.insert_resource(domain::GenericResource {
         state: Default::default(),
@@ -116,7 +130,6 @@ fn initialize_resources(
     world.insert_resource(diagnostic::DiagnosticResource::new(
         diagnostic_message_receiver,
     ));
-
     world.insert_resource(communication::CommunicationResource::new(
         communication_incoming_message_receiver,
     ));

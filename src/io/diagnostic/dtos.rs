@@ -6,13 +6,15 @@ use crate::core::{
     communication::ConnectionStatus,
     diagnostic::messages::DiagnosticResponse,
     domain::{OrchestratorState, SessionStatus},
+    geo::{Bounds, Coordinates},
 };
 
 use super::state::RequestError;
+
 #[derive(Serialize)]
-pub struct Coordinates {
-    pub long: f32,
-    pub lat: f32,
+pub struct CoordinatesDto {
+    pub lng: f64,
+    pub lat: f64,
 }
 
 #[derive(Serialize)]
@@ -21,7 +23,14 @@ pub struct SessionDetailsDTO {
     pub agent_id: u32,
     pub session_id: u32,
     pub session_status: String,
+    pub coordinates: CoordinatesDto,
     pub connection_status: String,
+}
+
+#[derive(Serialize)]
+pub struct BoundsDto {
+    pub north_west_corner: CoordinatesDto,
+    pub size_degrees: f64,
 }
 
 #[derive(Serialize)]
@@ -35,6 +44,10 @@ pub enum DTOs {
     },
     SessionCollection {
         sessions: Vec<SessionDetailsDTO>,
+    },
+    Environment {
+        perimeter: Vec<CoordinatesDto>,
+        cells: Vec<BoundsDto>,
     },
     Error {
         title: String,
@@ -61,18 +74,25 @@ impl ToDTO for DiagnosticResponse {
                 tickrate: *tickrate,
             },
             Self::SessionCollection { sessions } => {
-                let sessions = sessions
+                let sessions_dto = sessions
                     .iter()
                     .map(|session_representation| SessionDetailsDTO {
                         agent_id: session_representation.agent_id,
                         system_id: session_representation.system_id,
                         session_id: session_representation.session_id,
                         session_status: session_representation.session_status.to_string(),
+                        coordinates: session_representation.coordinates.to_dto(),
                         connection_status: session_representation.connection_status.to_string(),
                     })
                     .collect();
-                DTOs::SessionCollection { sessions }
+                DTOs::SessionCollection {
+                    sessions: sessions_dto,
+                }
             }
+            Self::Environment { perimeter, cells } => DTOs::Environment {
+                perimeter: perimeter.iter().map(|coord| coord.to_dto()).collect(),
+                cells: cells.iter().map(|cell| cell.to_dto()).collect(),
+            },
         }
     }
 }
@@ -80,7 +100,6 @@ impl ToDTO for DiagnosticResponse {
 impl fmt::Display for OrchestratorState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Booting => write!(f, "BOOTING"),
             Self::Running => write!(f, "RUNNING"),
             Self::Stopping => write!(f, "STOPPING"),
         }
@@ -115,6 +134,24 @@ impl ToDTO for RequestError {
                 title: "Too Many Requests".to_string(),
                 status: 429,
             },
+        }
+    }
+}
+
+impl Coordinates {
+    fn to_dto(self) -> CoordinatesDto {
+        CoordinatesDto {
+            lng: self.longitude,
+            lat: self.latitude,
+        }
+    }
+}
+
+impl Bounds {
+    fn to_dto(self) -> BoundsDto {
+        BoundsDto {
+            north_west_corner: self.north_west_corner.to_dto(),
+            size_degrees: self.size_degrees,
         }
     }
 }

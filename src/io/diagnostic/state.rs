@@ -41,9 +41,9 @@ impl AppState {
             },
         }
 
-        return match rx.await {
+        match rx.await {
             Ok(response) => Ok(response),
             Err(_) => Err(RequestError::GenericError),
-        };
+        }
     }
 }

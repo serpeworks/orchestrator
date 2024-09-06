@@ -1,9 +1,13 @@
 use bevy_ecs::{schedule::Schedule, world::World};
 
-use crate::core::{communication::{
-    system_communication_general, system_communication_receive_messages, CommsMessage,
-    CommsMessageSender, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
-}, misc::system_id_table::SystemIdTable};
+use crate::core::{
+    communication::{
+        system_communication_general, system_communication_receive_messages, CommsMessage,
+        CommsMessageSender, CommunicationResource, SerpeDialectReceiver, SerpeDialectSender,
+    },
+    geo::Coordinates,
+    misc::system_id_table::SystemIdTable,
+};
 
 pub struct CommunicationFixture {
     pub world: World,
@@ -49,9 +53,10 @@ impl CommunicationFixture {
                 agent_id,
                 receiver: incoming_receiver,
                 sender: outgoing_sender,
+                coordinates: Coordinates::default(),
             })
             .unwrap();
 
-        return (incoming_sender, outgoing_receiver);
+        (incoming_sender, outgoing_receiver)
     }
 }

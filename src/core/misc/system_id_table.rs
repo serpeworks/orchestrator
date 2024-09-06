@@ -8,6 +8,12 @@ pub struct SystemIdTable {
     used_ids: HashSet<SystemID>,
 }
 
+impl Default for SystemIdTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SystemIdTable {
     pub fn new() -> Self {
         SystemIdTable {

@@ -2,6 +2,8 @@ core:
   max_number_of_drones: 100
   maximum_tickrate: 100
   tickrate_calculation_period_ms: 250
+  perimeter_filepath: ./kmls/chelas_test.kml
+  cell_size: 0.0005
 communication:
   port: 8000
 diagnostic:

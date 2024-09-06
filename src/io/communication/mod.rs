@@ -6,8 +6,12 @@ use tokio::net::{
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    core::communication::{
-        CommsMessage, CommsMessageSender, SerpeDialectReceiver, SerpeDialectSender,
+    core::{
+        communication::{
+            CommsMessage, CommsMessageSender, SerpeDialectReceiver, SerpeDialectSender,
+        },
+        domain::AgentID,
+        geo::Coordinates,
     },
     dialects::SerpeDialect,
 };
@@ -66,18 +70,19 @@ async fn handle_connection(
         return;
     }
 
-    let agent_id = result.unwrap();
+    let (agent_id, coordinates) = result.unwrap();
 
     let (incoming_sender, incoming_receiver) =
         tokio::sync::mpsc::channel(CONNECTION_CHANNEL_BUFFER_SIZE);
     let (outgoing_sender, outgoing_receiver) =
         tokio::sync::mpsc::channel(CONNECTION_CHANNEL_BUFFER_SIZE);
 
-    send_channel_endpoints(
+    send_session_endpoints(
         agent_id,
         communication_message_sender,
         incoming_receiver,
         outgoing_sender,
+        coordinates,
     )
     .await;
 
@@ -87,7 +92,9 @@ async fn handle_connection(
     let _ = tokio::join!(listen_handle, write_handle);
 }
 
-async fn check_registration(receiver: &mut AsyncReceiver<OwnedReadHalf, V2>) -> Result<u32, ()> {
+async fn check_registration(
+    receiver: &mut AsyncReceiver<OwnedReadHalf, V2>,
+) -> Result<(AgentID, Coordinates), ()> {
     let result = receiver.recv().await;
 
     if result.is_err() {
@@ -96,23 +103,31 @@ async fn check_registration(receiver: &mut AsyncReceiver<OwnedReadHalf, V2>) -> 
 
     let message = result.unwrap().decode::<SerpeDialect>().unwrap();
     if let SerpeDialect::Register(msg) = message {
-        Ok(msg.agent_id)
+        Ok((
+            msg.agent_id,
+            Coordinates {
+                longitude: msg.longitude as f64,
+                latitude: msg.latitude as f64,
+            },
+        ))
     } else {
         Err(())
     }
 }
 
-async fn send_channel_endpoints(
+async fn send_session_endpoints(
     agent_id: u32,
     communication_message_sender: CommsMessageSender,
     receiver: SerpeDialectReceiver,
     sender: SerpeDialectSender,
+    coordinates: Coordinates,
 ) {
     communication_message_sender
         .send(CommsMessage::Register {
             agent_id,
             receiver,
             sender,
+            coordinates,
         })
         .await
         .unwrap();
@@ -185,9 +200,6 @@ async fn write(
     loop {
         match outgoing_receiver.recv().await {
             Some(msg) => {
-                tracing::info!("Received message to send.");
-
-                // create frame and filter some messages
                 let frame = match msg {
                     SerpeDialect::RegisterAck(msg) => endpoint.next_frame(&msg).unwrap(),
                     SerpeDialect::UnregisterAck(msg) => endpoint.next_frame(&msg).unwrap(),

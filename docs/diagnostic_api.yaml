@@ -13,7 +13,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: "#/components/schemas/ServerStatus"
+                  $ref: "#/components/schemas/ServerInformation"
         '401':
           description: Unauthorized
           content:
@@ -35,7 +35,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SessionList"
+                $ref: "#/components/schemas/SessionCollection"
         '401':
           description: Unauthorized
           content:
@@ -70,56 +70,85 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+
 components:
   schemas:
-    ServerStatus:
+    CoordinatesDto:
+      type: object
+      properties:
+        lng:
+          type: number
+          format: double
+        lat:
+          type: number
+          format: double
+
+    ServerInformation:
       type: object
       properties:
         state:
           type: string
           enum:
-            - BOOTING
             - RUNNING
             - STOPPING
         uptime:
-          type: number 
+          type: number
+          format: float
         tickrate:
           type: number
+          format: float
         version:
           type: string
           example: "0.1.5"
-    SessionList:
-      type: array
-    SessionRepresentation:
-      agent_id:
-        type: number
-      system_id:
-        type: number
-      session_id:
-        type: number
-      session_status:
-        type: string
-        enum:
-          - IDLE
-      connection_status:
-        type: string
-        enum:
-          - CONNECTED
-    SessionState:
-      type: string
-      enum:
-        - IDLE
-        - EMERGENCY
-    MissionState:
+
+    SessionDetailsDTO:
       type: object
       properties:
-        mission_id:
+        system_id:
           type: integer
+        agent_id:
+          type: integer
+        session_id:
+          type: integer
+        session_status:
+          type: string
+          enum:
+            - IDLE
+        coordinates:
+          $ref: "#/components/schemas/CoordinatesDto"
+        connection_status:
+          type: string
+          enum:
+            - CONNECTED
+            - DISCONNECTED
+    SessionCollection:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionDetailsDTO"
+
+    BoundsDto:
+      type: object
+      properties:
+        north_west_corner:
+          $ref: "#/components/schemas/CoordinatesDto"
+        size_degrees:
+          type: number
+          format: float
+
     Environment:
       type: object
       properties:
-        temp:
-          type: string
+        perimeter:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoordinatesDto"
+        cells:
+          type: array
+          items:
+            $ref: "#/components/schemas/BoundsDto"
     Problem:
       type: object
       properties:
@@ -127,4 +156,3 @@ components:
           type: string
         status:
           type: integer
-

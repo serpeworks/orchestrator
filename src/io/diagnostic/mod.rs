@@ -35,7 +35,8 @@ pub async fn run_diagnostic_server(
         ServiceBuilder::new()
             .layer(HandleErrorLayer::new(|err: BoxError| async move {
                 tracing::error!("Error frm Service Builder Layer");
-                ( StatusCode::INTERNAL_SERVER_ERROR,
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
                     format!("Unhandled error: {}", err),
                 )
             }))

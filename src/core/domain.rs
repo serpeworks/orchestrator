@@ -2,7 +2,13 @@ use std::time::Instant;
 
 use bevy_ecs::{bundle::Bundle, component::Component, system::Resource};
 
-use super::communication::SessionConnection;
+use super::{
+    communication::{
+        message_pools::{MessageSenderPool, MessageSnapshot},
+        SessionConnection,
+    },
+    geo::Coordinates,
+};
 
 pub type AgentID = u32;
 pub type SessionID = u32;
@@ -11,7 +17,6 @@ pub type SystemID = u8;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OrchestratorState {
     #[default]
-    Booting,
     Running,
     Stopping,
 }
@@ -29,10 +34,18 @@ pub struct SessionInformation {
     pub session_status: SessionStatus,
 }
 
+#[derive(Component)]
+pub struct Attitude {
+    pub coordinates: Coordinates,
+}
+
 #[derive(Bundle)]
 pub struct SessionBundle {
     pub session: SessionInformation,
+    pub attitude: Attitude,
     pub sockets: SessionConnection,
+    pub snapshot: MessageSnapshot,
+    pub sender_pool: MessageSenderPool,
 }
 
 #[derive(Resource)]
