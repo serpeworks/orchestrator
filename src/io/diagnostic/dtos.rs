@@ -24,7 +24,6 @@ pub struct MissionDto {
     pub waypoints: Vec<CoordinatesDto>,
 }
 
-
 #[derive(Serialize)]
 pub struct SessionDetailsDTO {
     pub system_id: u8,

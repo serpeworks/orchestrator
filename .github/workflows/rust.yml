@@ -22,19 +22,36 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  #build:
-  #needs: [formatting]
-  # runs-on: ubuntu-latest
-  # steps:
-  # - uses: actions/checkout@v2
-  # - uses: actions-rs/toolchain@v1
-  #   with:
-  #     profile: minimal
-  #     toolchain: stable
-  # - name: Build
-  #   uses: actions-rs/cargo@v1
-  #   with:
-  #     command: build
-  #     args: --verbose --release
-  # - name: List OUT_DIR contents
-  #      run: ls -R $OUT_DIR
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Build project
+        run: cargo build --verbose
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Run tests
+        run: cargo test --verbose
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

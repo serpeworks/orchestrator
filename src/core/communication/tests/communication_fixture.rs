@@ -33,7 +33,7 @@ impl CommunicationFixture {
                 cell_size: 0.0005,
             },
         ));
-        
+
         let mut schedule = Schedule::default();
         schedule.add_systems((
             system_communication_general,
